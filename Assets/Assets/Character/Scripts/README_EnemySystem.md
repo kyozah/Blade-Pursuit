@@ -27,7 +27,7 @@ Hướng dẫn setup hệ thống enemy với AI chase, attack, retreat, spawn t
      - detectionRange = 15 (khoảng cách phát hiện player).
      - attackRange = 2 (khoảng cách attack).
      - retreatDistance = 5 (khoảng cách lùi sau attack).
-     - moveSpeed = 5 (tốc độ di chuyển).
+     - moveSpeed = 10 (tốc độ di chuyển).
      - attackDelay = 1 (thời gian chuẩn bị attack).
    - **Knockback Settings**: Giữ nguyên hoặc điều chỉnh.
 5. Lưu làm Prefab trong Assets/Character/Prefabs/ (tạo thư mục nếu cần).
@@ -40,7 +40,8 @@ Hướng dẫn setup hệ thống enemy với AI chase, attack, retreat, spawn t
    - Điều chỉnh Size để định vùng hoạt động (e.g., Size = 20x20x20 cho vùng vuông).
 4. Trong Inspector của EnemyManager.cs:
    - **Spawn Settings**:
-     - enemyPrefab: Drag prefab Enemy vào.
+   - `skeletonPrefab / ghoulPrefab / tankPrefab: Drag tương ứng các prefab vào.
+     - skeletonWeight / ghoulWeight / tankWeight: Tỉ lệ spawn (tổng 1.0).
      - maxEnemies = 5 (số enemy tối đa trong vùng).
      - spawnRadius = 10 (bán kính spawn xung quanh center).
      - spawnHeight = 0 (chiều cao spawn).
@@ -54,10 +55,12 @@ Hướng dẫn setup hệ thống enemy với AI chase, attack, retreat, spawn t
 
 ### 5. Animation Setup (Tùy Chọn)
 - Trong Animator của Enemy:
-  - Thêm parameters: Trigger "Attack", "Hit", "Death".
+  - Thêm parameters: Bool "IsMoving", Bool "IsDead"; Triggers "Attack", "Hit". Prefer using Bool "IsDead" for death transitions (set true on death).
   - States: Idle, Run, Attack, Hit, Death.
   - Transitions: Từ Idle -> Run khi chase, Run -> Attack khi attack, etc.
 - Trong Enemy.cs, animation được trigger tự động.
+
+- Tank attack timing: Tank.prefab exposes `attackHitDelay` (seconds from attack start until damage is applied). Set `attackDelay` to match your attack animation length. Alternatively, add an Animation Event on the Tank attack clip that calls the public `OnAttackHit()` method to apply damage exactly at the animation frame.
 
 ### 6. Test
 1. Chạy scene.
