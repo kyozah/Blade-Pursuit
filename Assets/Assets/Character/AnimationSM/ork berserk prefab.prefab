@@ -11528,6 +11528,8 @@ MonoBehaviour:
   attackRange: 5.5
   retreatDistance: 5
   moveSpeed: 3
+  invertFacing: 0
+  rotationSpeed: 720
   attackDelay: 0.1
   attackCooldownOverride: -1
   knockbackForce: 5
@@ -11536,6 +11538,8 @@ MonoBehaviour:
   knockbackDrag: 8
   usePlayerForwardDirection: 1
   showDebugInfo: 1
+  deathAnimationDuration: 6
+  useDeathAnimationEvent: 0
   attackHitDelay: 0.6
 --- !u!1 &5796257444759742637
 GameObject:

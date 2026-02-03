@@ -40,8 +40,8 @@ Hướng dẫn setup hệ thống enemy với AI chase, attack, retreat, spawn t
    - Điều chỉnh Size để định vùng hoạt động (e.g., Size = 20x20x20 cho vùng vuông).
 4. Trong Inspector của EnemyManager.cs:
    - **Spawn Settings**:
-   - `skeletonPrefab / ghoulPrefab / tankPrefab: Drag tương ứng các prefab vào.
-     - skeletonWeight / ghoulWeight / tankWeight: Tỉ lệ spawn (tổng 1.0).
+   - `skeletonPrefab / flyPrefab / tankPrefab: Drag tương ứng các prefab vào.
+     - skeletonWeight / flyWeight / tankWeight: Tỉ lệ spawn (tổng 1.0).
      - maxEnemies = 5 (số enemy tối đa trong vùng).
      - spawnRadius = 10 (bán kính spawn xung quanh center).
      - spawnHeight = 0 (chiều cao spawn).
@@ -57,6 +57,7 @@ Hướng dẫn setup hệ thống enemy với AI chase, attack, retreat, spawn t
 - Trong Animator của Enemy:
   - Thêm parameters: Bool "IsMoving", Bool "IsDead"; Triggers "Attack", "Hit". Prefer using Bool "IsDead" for death transitions (set true on death).
   - States: Idle, Run, Attack, Hit, Death.
+  - **Death animation:** Add an Animation Event on the final frame of the Death clip that calls `OnDeathAnimationComplete()` (public method on `Enemy`) if you want the object destroyed exactly after the animation. Alternatively, set `deathAnimationDuration` to match the clip length and keep `Use Death Animation Event` disabled.
   - Transitions: Từ Idle -> Run khi chase, Run -> Attack khi attack, etc.
 - Trong Enemy.cs, animation được trigger tự động.
 
