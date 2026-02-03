@@ -158,9 +158,11 @@ MonoBehaviour:
   maxHealth: 100
   attackDamage: 5
   detectionRange: 15
-  attackRange: 2
+  attackRange: 3
   retreatDistance: 5
   moveSpeed: 5
+  invertFacing: 0
+  rotationSpeed: 720
   attackDelay: 1
   attackCooldownOverride: -1
   knockbackForce: 10
@@ -169,3 +171,5 @@ MonoBehaviour:
   knockbackDrag: 8
   usePlayerForwardDirection: 1
   showDebugInfo: 1
+  deathAnimationDuration: 2
+  useDeathAnimationEvent: 0

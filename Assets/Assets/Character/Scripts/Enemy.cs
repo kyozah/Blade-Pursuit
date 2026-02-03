@@ -13,6 +13,10 @@ public class Enemy : MonoBehaviour
     public float attackRange = 2f;
     public float retreatDistance = 5f;
     public float moveSpeed = 10f;
+    [Tooltip("If true, flip the model 180 degrees when facing the target (useful when model's forward points to tail)")]
+    public bool invertFacing = false;
+    [Tooltip("Degrees per second to rotate when facing movement direction. Set high for instant turn.")]
+    public float rotationSpeed = 720f;
     public float attackDelay = 1f; // Thời gian chuẩn bị attack
     public float attackCooldownOverride = -1f; // If >0, this enemy uses its own cooldown seconds
 
@@ -37,8 +41,14 @@ public class Enemy : MonoBehaviour
     public bool showDebugInfo = false;
 
     [Header("Animation")]
-    [Tooltip("Movement uses bool 'IsMoving'. Attack/Hit use triggers 'Attack'/'Hit'. For death prefer bool 'IsDead' (set true when dead).")]
+    // Movement uses bool 'IsMoving'. Attack/Hit use triggers 'Attack'/'Hit'. For death prefer bool 'IsDead' (set true when dead).
     // Movement parameter is fixed to 'IsMoving' to keep animation mapping simple
+
+    [Tooltip("If not using an animation event, the GameObject will be destroyed after this many seconds when dead.")]
+    public float deathAnimationDuration = 2f;
+
+    [Tooltip("If true, the enemy waits for an Animation Event calling 'OnDeathAnimationComplete' to destroy the GameObject instead of auto-destroying.")]
+    public bool useDeathAnimationEvent = false;
 
     private Rigidbody rb;
     private Animator animator;
@@ -51,7 +61,7 @@ public class Enemy : MonoBehaviour
 
     // AI variables
     private EnemyManager manager;
-    private Transform player;
+    protected Transform player;
     private enum AIState { Idle, Chase, Attack, Retreat }
     private AIState currentState = AIState.Idle;
     private Vector3 retreatPosition;
@@ -255,16 +265,26 @@ public class Enemy : MonoBehaviour
 
     void MoveTowards(Vector3 target)
     {
-        Vector3 direction = (target - transform.position).normalized;
-        rb.MovePosition(transform.position + direction * moveSpeed * Time.fixedDeltaTime);
-        if (player != null)
+        // Compute horizontal move direction and move via Rigidbody for consistent physics
+        Vector3 dir = target - transform.position;
+        dir.y = 0f;
+        Vector3 direction = dir.normalized;
+        if (direction.sqrMagnitude > 0f)
         {
-            transform.LookAt(player.position);
+            rb.MovePosition(transform.position + direction * moveSpeed * Time.fixedDeltaTime);
+
+            // Face movement direction (not raw player.lookAt) — this avoids tail-facing if model forward is inverted.
+            Quaternion targetRot = Quaternion.LookRotation(direction);
+            if (invertFacing) targetRot *= Quaternion.Euler(0f, 180f, 0f);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime);
         }
     }
 
-    void StartAttack()
+    protected virtual void StartAttack()
     {
+        // Ensure facing is correct before starting attack; subclasses may override FacePlayerInstant
+        FacePlayerInstant();
+
         currentState = AIState.Attack;
         isAttacking = true;
         manager.StartAttack(this);
@@ -278,6 +298,20 @@ public class Enemy : MonoBehaviour
             Debug.Log($"{gameObject.name} START_ATTACK at time {Time.time:F2}. attackDelay={attackDelay}, attackDamage={attackDamage}");
 
         StartCoroutine(PerformAttack());
+    }
+
+    /// <summary>
+    /// Instantly face the player horizontally, respecting `invertFacing` setting.
+    /// </summary>
+    protected void FacePlayerInstant()
+    {
+        if (player == null) return;
+        Vector3 dir = player.position - transform.position;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 1e-6f) return;
+        Quaternion targetRot = Quaternion.LookRotation(dir.normalized);
+        if (invertFacing) targetRot *= Quaternion.Euler(0f, 180f, 0f);
+        transform.rotation = targetRot;
     }
 
     protected virtual IEnumerator PerformAttack()
@@ -554,11 +588,19 @@ public class Enemy : MonoBehaviour
         {
             if (hasIsDead)
             {
-                if (showDebugInfo) Debug.Log($"{gameObject.name} setting Animator.IsDead = true");
-                animator.SetBool("IsDead", true);
+                // Set IsDead only if not already true to avoid re-entering death state repeatedly
+                bool alreadyDead = false;
+                try { alreadyDead = animator.GetBool("IsDead"); } catch { /* safe fallback */ }
+                if (!alreadyDead)
+                {
+                    if (showDebugInfo) Debug.Log($"{gameObject.name} setting Animator.IsDead = true");
+                    animator.SetBool("IsDead", true);
+                }
             }
             else
             {
+                // Reset then trigger once to avoid multiple retriggers from repeated Die() calls or animation events
+                animator.ResetTrigger("Death");
                 animator.SetTrigger("Death");
             }
         }
@@ -586,8 +628,25 @@ public class Enemy : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        // Finally destroy the gameobject after the death animation delay
-        Destroy(gameObject, 2f);
+        // Destroy logic: either wait for animation event or auto-destroy after duration
+        if (useDeathAnimationEvent && animator != null)
+        {
+            if (showDebugInfo) Debug.Log($"{gameObject.name} waiting for OnDeathAnimationComplete animation event.");
+            // Do not destroy here; wait for animation event to call OnDeathAnimationComplete.
+        }
+        else
+        {
+            Destroy(gameObject, deathAnimationDuration);
+        }
+    }
+
+    /// <summary>
+    /// Animation Event: call this at the final frame of the death clip to finalize destruction.
+    /// </summary>
+    public void OnDeathAnimationComplete()
+    {
+        if (showDebugInfo) Debug.Log($"{gameObject.name} OnDeathAnimationComplete called, destroying.");
+        Destroy(gameObject);
     }
 
     public void SetManager(EnemyManager mgr)

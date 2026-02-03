@@ -24,7 +24,7 @@ public class EnemyManagerEditor : Editor
 
             EditorGUI.BeginChangeCheck();
             mgr.allowSkeleton = EditorGUILayout.Toggle("Allow Skeleton", mgr.allowSkeleton);
-            mgr.allowGhoul = EditorGUILayout.Toggle("Allow Ghoul", mgr.allowGhoul);
+            mgr.allowFly = EditorGUILayout.Toggle("Allow Fly", mgr.allowFly);
             mgr.allowTank = EditorGUILayout.Toggle("Allow Tank", mgr.allowTank);
             if (EditorGUI.EndChangeCheck())
             {

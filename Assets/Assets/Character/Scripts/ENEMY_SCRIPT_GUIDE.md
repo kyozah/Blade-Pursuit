@@ -36,8 +36,8 @@ Tài liệu này mô tả các script liên quan tới hệ thống enemy trong 
 - Collider phù hợp (Capsule/Box) để va chạm.
 
 > Lưu ý về scripts trên Prefab:
-- **Chỉ cần gắn script của loại quái cụ thể** (ví dụ `Ghoul`, `Skeleton`, `Tank`) vì các class này kế thừa từ `Enemy` và đã chứa toàn bộ hành vi cần thiết.
-- **Không cần gắn cả `Enemy` và `Ghoul` đồng thời**; chỉ giữ một script (ở thực tế chỉ attach `Ghoul`).
+- **Chỉ cần gắn script của loại quái cụ thể** (ví dụ `Fly`, `Skeleton`, `Tank`) vì các class này kế thừa từ `Enemy` và đã chứa toàn bộ hành vi cần thiết.
+- **Không cần gắn cả `Enemy` và `Fly` đồng thời**; chỉ giữ một script (ở thực tế chỉ attach `Fly`).
 
 ---
 
@@ -45,8 +45,8 @@ Tài liệu này mô tả các script liên quan tới hệ thống enemy trong 
 **Mục đích:** Spawn các prefab theo vùng trigger, quản lý số lượng và điều phối attack cooldown.
 
 ### Các trường (Inspector)
-- `skeletonPrefab`, `ghoulPrefab`, `tankPrefab` (GameObject).
-- `skeletonWeight`, `ghoulWeight`, `tankWeight` (float, sum không cần đúng 1 — code tự chuẩn hóa): xác suất spawn.
+- `skeletonPrefab`, `flyPrefab`, `tankPrefab` (GameObject).
+- `skeletonWeight`, `flyWeight`, `tankWeight` (float, sum không cần đúng 1 — code tự chuẩn hóa): xác suất spawn.
 - `maxEnemies`, `spawnRadius`, `spawnHeight`.
 - `attackCooldown` (float): Thời gian giữa các lượt attack trên toàn vùng.
 
@@ -72,6 +72,19 @@ Dưới đây là hướng dẫn ngắn gọn, làm theo từng bước trong Un
    - Gắn script `Skeleton` (hoặc `Goblin` / `Tank` nếu muốn tạo loại chính).
    - Trong Inspector của script: điều chỉnh **Stats** (ví dụ `maxHealth`, `attackDamage`, `moveSpeed`, `attackDelay`).
    - Tạo `AnimatorController` và đảm bảo các parameter: Trigger `Attack`, `Hit`, `Death`; Bool `IsMoving`.
+    
+    **Death animation setup (Thiết lập animation chết)**
+    - Khuyến nghị: thêm Bool parameter `IsDead` (recommended). Khi enemy chết, script sẽ set `IsDead = true` nếu parameter có, hoặc sẽ fallback sang Trigger `Death`.
+    - Để đảm bảo GameObject bị destroyed đúng sau khi clip death chạy xong, thêm **Animation Event** ở frame cuối của clip death, gọi method `OnDeathAnimationComplete()` (public trong `Enemy`). Hoặc bật `Use Death Animation Event` trong Inspector của `Enemy` (thuộc tính `useDeathAnimationEvent`) và thêm event trong Animation clip.
+    - Nếu không dùng animation event, chỉnh `deathAnimationDuration` trong Inspector (mặc định = 2s) để thời gian destroy phù hợp với clip.
+    - Gợi ý: đảm bảo state `Death` không trả về state khác (exit time off) và chuyển sang một state rời khỏi bàn điều khiển khi hoàn tất (hoặc sử dụng animation event để destroy).
+
+**Troubleshooting: nếu death animation lặp liên tục**
+- Kiểm tra clip animation (select clip in Project): trong Import Settings, **uncheck 'Loop Time'** cho clip Death.
+- Mở `Animator` và chọn state `Death`: đảm bảo không có transition quay về chính state đó, và nếu có transition out thì **bỏ 'Has Exit Time'** nếu không muốn re-enter.
+- Sử dụng `IsDead` boolean (recommended): script bây giờ chỉ set `IsDead = true` 1 lần. Nếu bạn vẫn thấy lặp, kiểm tra animation transitions hoặc animation events có thể gọi lại trigger.
+- Nếu dùng Trigger `Death` thay vì `IsDead`, đảm bảo trigger chỉ được gọi 1 lần và không có animation event/transition gọi trigger lại.
+- Thử bật `Use Death Animation Event` và đặt Animation Event `OnDeathAnimationComplete()` ở frame cuối để chắc chắn object bị destroy ngay sau kết thúc clip.
    - Kéo GameObject vào thư mục `Assets/.../Prefabs` để lưu thành Prefab.
 
 3. **Thiết lập animation**
@@ -82,10 +95,10 @@ Dưới đây là hướng dẫn ngắn gọn, làm theo từng bước trong Un
 4. **Tạo/Thiết lập `EnemyManager`**
    - Tạo một GameObject trống, tên `EnemyManager_ZoneX`.
    - Add component `EnemyManager` và một Collider (Box/Sphere) với **Is Trigger = true**.
-   - Trong inspector `EnemyManager`: kéo các prefab vào `skeletonPrefab`, `goblinPrefab`, `tankPrefab`.
-   - Điều chỉnh `skeletonWeight`, `ghoulWeight`, `tankWeight` (ví dụ mặc định `0.5`, `0.3`, `0.2`).
-   - **Bấm nút `Edit Allowed Spawns` để bật/tắt loại quái được phép spawn** và tích chọn `Allow Skeleton` / `Allow Ghoul` / `Allow Tank`.
-   - **Thiết lập `Max Ghoul Per Zone`** để giới hạn số Ghoul tồn tại đồng thời trong khu vực (mặc định = 1).
+   - Trong Inspector của EnemyManager: kéo các prefab vào `skeletonPrefab`, `flyPrefab`, `tankPrefab`.
+   - Điều chỉnh `skeletonWeight`, `flyWeight`, `tankWeight` (ví dụ mặc định `0.5`, `0.3`, `0.2`).
+   - **Bấm nút `Edit Allowed Spawns` để bật/tắt loại quái được phép spawn** và tích chọn `Allow Skeleton` / `Allow Fly` / `Allow Tank`.
+   - **Thiết lập `Max Fly Per Zone`** để giới hạn số Fly tồn tại đồng thời trong khu vực (mặc định = 1).
    - Set `maxEnemies`, `spawnRadius`, `spawnHeight` phù hợp với khu vực.
 
 5. **Test nhanh**
@@ -107,7 +120,7 @@ Dưới đây là hướng dẫn ngắn gọn, làm theo từng bước trong Un
 
 ## Các loại enemy cụ thể 🧩
 - `Skeleton` — hành vi mặc định (giữ các giá trị cơ bản).
-- `Ghoul` — **chết 1 phát (maxHealth = 1)**, tốc độ cao có thể đuổi kịp người chơi khi chạy (`moveSpeed = 18`), tấn công nhanh với cooldown 1s (`attackCooldownOverride = 1`). Ví dụ mặc định trong script: `maxHealth = 1`, `attackDelay = 0.5`, `moveSpeed = 18`, `attackDamage = 8`, `attackCooldownOverride = 1`.
+- `Fly` — **chết 1 phát (maxHealth = 1)**, tốc độ cao có thể đuổi kịp người chơi khi chạy (`moveSpeed = 18`), tấn công nhanh với cooldown 1s (`attackCooldownOverride = 1`). Ví dụ mặc định trong script: `maxHealth = 1`, `attackDelay = 0.5`, `moveSpeed = 18`, `attackDamage = 8`, `attackCooldownOverride = 1`.
 - `Tank` — máu và damage cao, di chuyển & đánh chậm. Ví dụ mặc định: `maxHealth = 300`, `attackDelay = 2.5`, `moveSpeed = 2`, `attackDamage = 25`.
 
 Muốn thêm loại mới: Tạo class kế thừa `Enemy` và override `Start()` để đặt giá trị mặc định trước khi gọi `base.Start()`.

@@ -1,24 +1,25 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using System.Collections.Generic;
 
 public class EnemyManager : MonoBehaviour
 {
     [Header("Spawn Settings")]
     public GameObject skeletonPrefab;
-    public GameObject ghoulPrefab;
+    [FormerlySerializedAs("ghoulPrefab")] public GameObject flyPrefab;
     public GameObject tankPrefab;
     [Range(0f,1f)] public float skeletonWeight = 0.5f;
-    [Range(0f,1f)] public float ghoulWeight = 0.3f;
+    [FormerlySerializedAs("ghoulWeight")] [Range(0f,1f)] public float flyWeight = 0.3f;
     [Range(0f,1f)] public float tankWeight = 0.2f;
 
     [Tooltip("Toggle which enemy types are allowed to spawn from this manager.")]
     public bool allowSkeleton = true;
-    public bool allowGhoul = true;
+    [FormerlySerializedAs("allowGhoul")] public bool allowFly = true;
     public bool allowTank = true;
 
     [Header("Per-type Limits")]
-    [Tooltip("Maximum number of Ghouls allowed to exist in this spawn zone at the same time. Set 0 for no ghouls.")]
-    public int maxGhoulPerZone = 1;
+    [Tooltip("Maximum number of Flies allowed to exist in this spawn zone at the same time. Set 0 for no flies.")]
+    [FormerlySerializedAs("maxGhoulPerZone")] public int maxFlyPerZone = 1;
 
     public int maxEnemies = 5;
     public float spawnRadius = 10f;
@@ -88,9 +89,9 @@ public class EnemyManager : MonoBehaviour
         // Remove destroyed/null entries before spawning
         enemies.RemoveAll(e => e == null);
 
-        if (skeletonPrefab == null && ghoulPrefab == null && tankPrefab == null)
+        if (skeletonPrefab == null && flyPrefab == null && tankPrefab == null)
         {
-            Debug.LogError($"EnemyManager '{gameObject.name}' has no prefabs assigned (skeleton/ghoul/tank). Assign at least one prefab.");
+            Debug.LogError($"EnemyManager '{gameObject.name}' has no prefabs assigned (skeleton/fly/tank). Assign at least one prefab.");
             return;
         }
 
@@ -104,23 +105,23 @@ public class EnemyManager : MonoBehaviour
                 continue;
             }
 
-            // Enforce Ghoul per-zone limit: if prefab chosen is Ghoul but limit reached, pick alternate
-            if (prefab == ghoulPrefab && maxGhoulPerZone >= 0)
+            // Enforce Fly per-zone limit: if prefab chosen is Fly but limit reached, pick alternate
+            if (prefab == flyPrefab && maxFlyPerZone >= 0)
             {
-                int existingGhouls = 0;
+                int existingFlies = 0;
                 foreach (var e in enemies)
                 {
                     if (e == null) continue;
-                    if (e is Ghoul) existingGhouls++;
+                    if (e is Fly) existingFlies++;
                 }
-                if (existingGhouls >= maxGhoulPerZone)
+                if (existingFlies >= maxFlyPerZone)
                 {
-                    // Try to get an alternate prefab excluding Ghoul
-                    prefab = GetRandomPrefabExcludingGhoul();
+                    // Try to get an alternate prefab excluding Fly
+                    prefab = GetRandomPrefabExcludingFly();
                     if (prefab == null)
                     {
                         // nothing else allowed to spawn, skip this slot
-                        if (showDebugInfo) Debug.Log($"EnemyManager '{gameObject.name}': max ghouls reached ({existingGhouls}), skipping spawn.");
+                        if (showDebugInfo) Debug.Log($"EnemyManager '{gameObject.name}': max flies reached ({existingFlies}), skipping spawn.");
                         continue;
                     }
                 }
@@ -146,9 +147,9 @@ public class EnemyManager : MonoBehaviour
         }
     }
 
-    GameObject GetRandomPrefabExcludingGhoul()
+    GameObject GetRandomPrefabExcludingFly()
     {
-        // Build a weighted list of allowed prefabs excluding ghoul
+        // Build a weighted list of allowed prefabs excluding fly
         var prefabs = new System.Collections.Generic.List<GameObject>();
         var weights = new System.Collections.Generic.List<float>();
 
@@ -190,10 +191,10 @@ public class EnemyManager : MonoBehaviour
             prefabs.Add(skeletonPrefab);
             weights.Add(skeletonWeight);
         }
-        if (allowGhoul && ghoulPrefab != null && ghoulWeight > 0f)
+        if (allowFly && flyPrefab != null && flyWeight > 0f)
         {
-            prefabs.Add(ghoulPrefab);
-            weights.Add(ghoulWeight);
+            prefabs.Add(flyPrefab);
+            weights.Add(flyWeight);
         }
         if (allowTank && tankPrefab != null && tankWeight > 0f)
         {
