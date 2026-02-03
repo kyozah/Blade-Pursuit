@@ -1,63 +1,58 @@
 ﻿using UnityEngine;
+using UnityEngine.Playables; 
 
 public class BossAnimEvents : MonoBehaviour
 {
     BossCombat combat;
 
     [Header("Hitbox References")]
-    public BossWeaponHitbox weaponHitbox;      // Vũ khí (Attack1, Attack3)
-    public BossWeaponHitbox shoulderHitbox;    // Vai (Attack2/Charge)
+    public BossWeaponHitbox weaponHitbox;
+    public BossWeaponHitbox shoulderHitbox;
+
+    [Header("VFX Impact Settings")]
+    public GameObject impactEffect; // Kéo cái EarthSlam từ Hierarchy vào đây [cite: 2025-09-22]
+    public Transform spawnPoint;    // Kéo một Empty Object dưới chân Boss vào đây để định vị [cite: 2025-09-22]
+    public float vfxScale = 20f;    
 
     void Awake()
     {
         combat = GetComponentInParent<BossCombat>();
     }
 
-    // ====== ROAR & ATTACK EVENTS ======
-
-    public void AE_RoarEnd()
+    public void ExecuteImpact()
+{
+    if (impactEffect != null)
     {
-        combat.AE_RoarEnd();
-    }
+        // 1. Tắt để reset
+        impactEffect.SetActive(false);
 
-    public void AE_AttackEnd()
-    {
-        combat.AE_AttackEnd();
-    }
+        // 2. Ép vị trí: Lấy vị trí của Boss nhưng ép Y = 0 (hoặc sát mặt đất)
+        Vector3 groundPos = transform.position;
+        groundPos.y = 0.05f; // Ép nó nằm trên mặt sàn một tí
+        impactEffect.transform.position = groundPos; 
 
-    // ====== WEAPON HITBOX EVENTS ======
+        // 3. Ép xoay và Scale
+        impactEffect.transform.rotation = Quaternion.Euler(-90f, 0f, 0f);
+        impactEffect.transform.localScale = Vector3.one * vfxScale;
 
-    public void AE_WeaponHitboxOn()
-    {
-        if (weaponHitbox != null)
+        // 4. Bật và Chạy
+        impactEffect.SetActive(true);
+
+        var director = impactEffect.GetComponent<UnityEngine.Playables.PlayableDirector>();
+        if (director != null)
         {
-            weaponHitbox.EnableHitbox();
+            director.time = 0;
+            director.Play();
         }
+        
+        Debug.Log("Đã nổ VFX tại chân Boss!");
     }
-
-    public void AE_WeaponHitboxOff()
-    {
-        if (weaponHitbox != null)
-        {
-            weaponHitbox.DisableHitbox();
-        }
-    }
-
-    // ====== SHOULDER HITBOX EVENTS (for Charge) ======
-
-    public void AE_ShoulderHitboxOn()
-    {
-        if (shoulderHitbox != null)
-        {
-            shoulderHitbox.EnableHitbox();
-        }
-    }
-
-    public void AE_ShoulderHitboxOff()
-    {
-        if (shoulderHitbox != null)
-        {
-            shoulderHitbox.DisableHitbox();
-        }
-    }
+}
+    // Các hàm AE_ của sếp giữ nguyên...
+    public void AE_RoarEnd() { combat.AE_RoarEnd(); }
+    public void AE_AttackEnd() { combat.AE_AttackEnd(); }
+    public void AE_WeaponHitboxOn() { if (weaponHitbox != null) weaponHitbox.EnableHitbox(); }
+    public void AE_WeaponHitboxOff() { if (weaponHitbox != null) weaponHitbox.DisableHitbox(); }
+    public void AE_ShoulderHitboxOn() { if (shoulderHitbox != null) shoulderHitbox.EnableHitbox(); }
+    public void AE_ShoulderHitboxOff() { if (shoulderHitbox != null) shoulderHitbox.DisableHitbox(); }
 }
