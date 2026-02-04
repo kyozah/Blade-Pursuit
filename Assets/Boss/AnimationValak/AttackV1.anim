@@ -140910,7 +140910,7 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 4.05
+  - time: 4.516667
     functionName: AE_AttackEnd
     data: 
     objectReferenceParameter: {fileID: 0}
