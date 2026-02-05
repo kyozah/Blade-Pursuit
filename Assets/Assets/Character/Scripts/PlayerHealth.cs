@@ -52,6 +52,7 @@ public class PlayerHealth : MonoBehaviour
     private ThirdPersonController movementController;
     private AttackComboController attackController;
     private RollController rollController;
+    private PlayerAudioSystem audioSystem;
 
     void Start()
     {
@@ -67,6 +68,7 @@ public class PlayerHealth : MonoBehaviour
         movementController = GetComponent<ThirdPersonController>();
         attackController = GetComponent<AttackComboController>();
         rollController = GetComponent<RollController>();
+        audioSystem = GetComponent<PlayerAudioSystem>();
 
         Debug.Log($"✅ PlayerHealth initialized. Max HP: {maxHealth}");
     }
@@ -99,6 +101,12 @@ public class PlayerHealth : MonoBehaviour
         currentHealth = Mathf.Max(currentHealth, 0);
 
         Debug.Log($"💔 Player took {damage} damage. HP: {currentHealth}/{maxHealth}");
+
+        // Play damage sound
+        if (audioSystem != null)
+        {
+            audioSystem.PlayDamageSound();
+        }
 
         if (currentHealth <= 0)
         {
@@ -228,6 +236,12 @@ public class PlayerHealth : MonoBehaviour
         isDead = true;
 
         Debug.Log("💀 Player DIED");
+
+        // Play death sound (parallel with animation)
+        if (audioSystem != null)
+        {
+            audioSystem.PlayDeathSound();
+        }
 
         InterruptActions();
 

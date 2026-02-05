@@ -58,6 +58,7 @@ public class Enemy : MonoBehaviour
     private float originalDrag;
     private Coroutine knockbackCoroutine;
     private bool isDead = false; // true after Die() called to stop AI and interactions
+    private EnemyAudioSystem audioSystem;
 
     // AI variables
     private EnemyManager manager;
@@ -75,6 +76,7 @@ public class Enemy : MonoBehaviour
         currentHealth = maxHealth;
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
+        audioSystem = GetComponent<EnemyAudioSystem>();
 
         // Try to find animator in children if missing
         if (animator == null)
@@ -294,6 +296,12 @@ public class Enemy : MonoBehaviour
             animator.SetTrigger("Attack");
         }
 
+        // Play attack sound
+        if (audioSystem != null)
+        {
+            audioSystem.PlayAttackSound();
+        }
+
         if (showDebugInfo || (manager != null && manager.showDebugInfo))
             Debug.Log($"{gameObject.name} START_ATTACK at time {Time.time:F2}. attackDelay={attackDelay}, attackDamage={attackDamage}");
 
@@ -444,6 +452,12 @@ public class Enemy : MonoBehaviour
         // Trừ máu
         currentHealth -= damage;
 
+        // Play damage sound (parallel with animation)
+        if (audioSystem != null)
+        {
+            audioSystem.PlayDamageSound();
+        }
+
         // Animation
         if (animator != null)
         {
@@ -577,6 +591,12 @@ public class Enemy : MonoBehaviour
 
         Debug.Log($"💀 {gameObject.name} died");
 
+        // Play death sound (parallel with animation)
+        if (audioSystem != null)
+        {
+            audioSystem.PlayDeathSound();
+        }
+
         // Remove from manager list immediately
         if (manager != null)
         {
@@ -668,5 +688,11 @@ public class Enemy : MonoBehaviour
                 moveTarget = player.position;
             }
         }
+    }
+
+    // Public getter for IsDead
+    public bool IsDead
+    {
+        get { return isDead; }
     }
 }

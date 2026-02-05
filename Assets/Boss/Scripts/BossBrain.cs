@@ -75,6 +75,9 @@ public class BossBrain : MonoBehaviour
             currentPhase = Phase.Phase2;
             currentState = State.Roar;
 
+            // Notify UI as well (re-show/bind)
+            BossUIManager.Instance?.ShowBoss(this);
+
             movement.Lock();
             combat.DoRoar2();
         }
@@ -86,7 +89,18 @@ public class BossBrain : MonoBehaviour
 
         if (!hasRoaredOnce && dist <= detectRange)
         {
+            Debug.Log($"[BossBrain] Player detected! Distance: {dist}, Range: {detectRange}");
             hasRoaredOnce = true;
+            // Notify UI to show boss name intro (bind UI to this boss)
+            if (BossUIManager.Instance != null)
+            {
+                Debug.Log("[BossBrain] Calling BossUIManager.Instance.ShowBoss(this)");
+                BossUIManager.Instance.ShowBoss(this);
+            }
+            else
+            {
+                Debug.LogError("[BossBrain] BossUIManager.Instance is NULL!");
+            }
             currentState = State.Roar;
             combat.DoRoar1();
             return;
