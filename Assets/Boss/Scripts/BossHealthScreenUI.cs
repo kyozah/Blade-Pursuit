@@ -314,7 +314,8 @@ public class BossHealthScreenUI : MonoBehaviour
 
     void OnBossDied()
     {
-        HideImmediate();
+        // Hide the UI after 3 seconds when the boss dies
+        Invoke(nameof(HideImmediate), 3f);
         Unbind();
         introPlayed = false;
     }
@@ -335,7 +336,10 @@ public class BossHealthScreenUI : MonoBehaviour
             mainCanvasGroup.alpha = 0f;
     }
 
-    void HideImmediate()
+    /// <summary>
+    /// Hide the UI immediately (public version for external use like BossBrain)
+    /// </summary>
+    public void HideImmediate()
     {
         if (canvasGroup != null)
             canvasGroup.alpha = 0f;
