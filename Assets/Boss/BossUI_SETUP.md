@@ -40,8 +40,8 @@ Mục tiêu: Hiển thị tên boss lớn khi boss phát hiện người chơi (
 ## 3) Thiết lập `BossUIManager` singleton 🗂️
 1. Tạo GameObject (ví dụ `BossUIManager`) trong Scene.
 2. Attach `BossUIManager` script.
-3. Assign `bossUI` = `BossUI_Root` (GameObject có `BossHealthScreenUI`).
-> Lưu ý: `BossBrain` sẽ tự gọi `BossUIManager.Instance.ShowBoss(this)` khi detect player / chuyển phase.
+3. Assign **one or more** `BossHealthScreenUI` instances to the `bossUIs` array. Thêm tối đa hai (hoặc nhiều hơn nếu bạn muốn) panel khác nhau – mỗi boss sẽ được map tới một slot riêng.
+> Lưu ý: `BossBrain` sẽ tự gọi `BossUIManager.Instance.ShowBoss(this)` khi detect player / chuyển phase. Bạn có thể gán đồng thời trường `bossUIIndex` ở `BossBrain` để ép sử dụng slot cụ thể.
 ---
 ## 4) Chuẩn bị Boss prefab / object
 - Trên prefab boss, đảm bảo có `BossBrain` và một child chứa `BossHealth`.
@@ -65,30 +65,38 @@ Khi boss bị thương, slider sẽ cập nhật và UI sẽ hiện lại; khi b
 BossUIManager.Instance.ShowBoss(this);
 ```
 
-- Gọi với tên override, sprite override cho icon, và sprite cho healthbar:
+Nếu bạn muốn chỉ ra UI cụ thể (ví dụ boss thứ hai) có thể sử dụng overload mới với index:
 
 ```csharp
-// show with custom name, intro icon and custom healthbar image
+BossUIManager.Instance.ShowBoss(this, displayName:null, displaySprite:null, displayHealthBarSprite:null);
+// hoặc thiết lập bossBrain.bossUIIndex = 1;
+```
+
+- Gọi với tên override, sprite override cho icon, và sprite cho healthbar (vẫn hoạt động như trước):
+
+```csharp
 BossUIManager.Instance.ShowBoss(this, "Overlord", introSprite, healthbarSprite);
 ```
 
 - Thay đổi sprite khi UI đang hiển thị (icon):
 
 ```csharp
-BossUIManager.Instance.SetCurrentBossDisplaySprite(newSprite, writeBackToBoss: false);
+// bạn phải truyền BossHealth để thay đổi đúng UI
+BossHealth boss = ...;
+BossUIManager.Instance.SetBossDisplaySprite(boss, newSprite, writeBackToBoss: false);
 ```
 
 - Thay đổi healthbar image khi UI đang hiển thị:
 
 ```csharp
-BossUIManager.Instance.SetCurrentBossHealthBarSprite(healthbarSprite);
+BossUIManager.Instance.SetBossHealthBarSprite(boss, healthbarSprite);
 ```
 
 - Xóa override hoặc quay lại sử dụng icon/name gốc của boss:
 
 ```csharp
-BossUIManager.Instance.ClearCurrentBossDisplaySprite();
-BossUIManager.Instance.ClearCurrentBossHealthBarSprite();
+BossUIManager.Instance.ClearBossDisplaySprite(boss);
+BossUIManager.Instance.ClearBossHealthBarSprite(boss);
 ```
 
 

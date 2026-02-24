@@ -19,36 +19,46 @@ public class BossUIDebug : MonoBehaviour
         {
             Debug.Log("[DEBUG] ✅ BossUIManager.Instance found.");
 
-            // Check 2: BossUIManager has bossUI assigned
-            if (BossUIManager.Instance.GetComponent<BossUIManager>().bossUI == null)
+            // Check 2: BossUIManager has bossUIs assigned
+            var manager = BossUIManager.Instance.GetComponent<BossUIManager>();
+            if (manager.bossUIs == null || manager.bossUIs.Length == 0)
             {
-                Debug.LogError("[DEBUG] BossUIManager.bossUI is NULL! Assign BossUI_Root (with BossHealthScreenUI) in the Inspector.");
+                Debug.LogError("[DEBUG] BossUIManager.bossUIs array is empty! Assign one or more BossHealthScreenUI instances in the Inspector.");
             }
             else
             {
-                Debug.Log("[DEBUG] ✅ BossUIManager.bossUI is assigned.");
+                Debug.Log($"[DEBUG] ✅ BossUIManager has {manager.bossUIs.Length} UI slot(s) assigned.");
 
-                // Check 3: BossHealthScreenUI has required fields
-                var ui = BossUIManager.Instance.GetComponent<BossUIManager>().bossUI;
-                if (ui.healthSlider == null)
-                    Debug.LogError("[DEBUG] BossHealthScreenUI.healthSlider is NULL! Assign the Slider.");
-                else
-                    Debug.Log("[DEBUG] ✅ BossHealthScreenUI.healthSlider is assigned.");
+                // Check each UI slot
+                for (int i = 0; i < manager.bossUIs.Length; i++)
+                {
+                    var ui = manager.bossUIs[i];
+                    if (ui == null)
+                    {
+                        Debug.LogError($"[DEBUG] bossUIs[{i}] is NULL! Make sure all slots are filled.");
+                        continue;
+                    }
 
-                if (ui.introNameText == null && ui.introImage == null)
-                    Debug.LogWarning("[DEBUG] BossHealthScreenUI.introNameText and introImage are both NULL! You need at least one for intro.");
-                else
-                    Debug.Log("[DEBUG] ✅ Intro UI has either text or image.");
+                    if (ui.healthSlider == null)
+                        Debug.LogError($"[DEBUG] bossUIs[{i}].healthSlider is NULL! Assign the Slider.");
+                    else
+                        Debug.Log($"[DEBUG] ✅ bossUIs[{i}].healthSlider is assigned.");
 
-                if (ui.introCanvasGroup == null)
-                    Debug.LogError("[DEBUG] BossHealthScreenUI.introCanvasGroup is NULL! Assign IntroGroup CanvasGroup.");
-                else
-                    Debug.Log("[DEBUG] ✅ BossHealthScreenUI.introCanvasGroup is assigned.");
+                    if (ui.introNameText == null && ui.introImage == null)
+                        Debug.LogWarning($"[DEBUG] bossUIs[{i}] introNameText and introImage are both NULL! Need at least one.");
+                    else
+                        Debug.Log($"[DEBUG] ✅ bossUIs[{i}] has either text or image for intro.");
 
-                if (ui.mainCanvasGroup == null)
-                    Debug.LogError("[DEBUG] BossHealthScreenUI.mainCanvasGroup is NULL! Assign MainGroup CanvasGroup.");
-                else
-                    Debug.Log("[DEBUG] ✅ BossHealthScreenUI.mainCanvasGroup is assigned.");
+                    if (ui.introCanvasGroup == null)
+                        Debug.LogError($"[DEBUG] bossUIs[{i}].introCanvasGroup is NULL! Assign IntroGroup CanvasGroup.");
+                    else
+                        Debug.Log($"[DEBUG] ✅ bossUIs[{i}].introCanvasGroup is assigned.");
+
+                    if (ui.mainCanvasGroup == null)
+                        Debug.LogError($"[DEBUG] bossUIs[{i}].mainCanvasGroup is NULL! Assign MainGroup CanvasGroup.");
+                    else
+                        Debug.Log($"[DEBUG] ✅ bossUIs[{i}].mainCanvasGroup is assigned.");
+                }
             }
         }
 
