@@ -10,6 +10,9 @@ public class AttackComboController : MonoBehaviour
     private bool isExecutingAttack = false;
 
     [Header("Weapon Hitbox")]
+    // ✅ Không cần gán trong Inspector hay tìm trong Start().
+    // PlayerWeaponManager sẽ tự gán field này sau khi player equip weapon.
+    // Khi chưa có weapon, field này là null và các call Enable/DisableDamage sẽ bị bỏ qua an toàn.
     public WeaponHitbox weaponHitbox;
 
     [Header("Attack Movement")]
@@ -55,18 +58,11 @@ public class AttackComboController : MonoBehaviour
         characterController = GetComponent<CharacterController>();
         rb = GetComponent<Rigidbody>();
 
-        if (weaponHitbox == null)
-        {
-            weaponHitbox = GetComponentInChildren<WeaponHitbox>();
-            if (weaponHitbox != null)
-            {
-                Debug.Log($"✅ WeaponHitbox found: {weaponHitbox.gameObject.name}");
-            }
-            else
-            {
-                Debug.LogError("❌ WeaponHitbox NOT FOUND!");
-            }
-        }
+        // ✅ KHÔNG tìm WeaponHitbox ở đây nữa.
+        // Lý do: lúc Start() chạy, player chưa equip weapon nào.
+        // PlayerWeaponManager.SetupWeaponHitbox() sẽ gán weaponHitbox khi player pickup weapon.
+        // Nếu player bắt đầu với weapon có sẵn trong tay (pre-equipped),
+        // thì PlayerWeaponManager cần gọi PickupWeapon() trong Start() của nó.
 
         rollController = GetComponent<RollController>();
         if (rollController == null)
@@ -93,15 +89,18 @@ public class AttackComboController : MonoBehaviour
 
     void HandleAttackLogic()
     {
-        // ✅ CHECK: Không thể attack khi đang roll
+        // Không thể attack khi đang roll
         if (rollController != null && rollController.IsRolling())
-        {
             return;
-        }
 
-        // ✅ FIXED: Check IsInImpact thay vì IsStunned
+        // Không thể attack khi bị impact hoặc đã chết
         if (playerHealth != null && (playerHealth.IsInImpact() || playerHealth.IsDead()))
+            return;
+
+        // ✅ Không thể attack nếu không có weapon
+        if (weaponHitbox == null)
         {
+            Debug.LogWarning("⚠ No weapon equipped! Cannot attack.");
             return;
         }
 
@@ -135,17 +134,11 @@ public class AttackComboController : MonoBehaviour
                 Vector3 movement = dashDirection * dashSpeed * Time.deltaTime;
 
                 if (characterController != null)
-                {
                     characterController.Move(movement);
-                }
                 else if (rb != null)
-                {
                     rb.MovePosition(rb.position + movement);
-                }
                 else
-                {
                     transform.position += movement;
-                }
             }
             else
             {
@@ -179,7 +172,7 @@ public class AttackComboController : MonoBehaviour
     public void EnableNextInput()
     {
         canReceiveInput = true;
-        Debug.Log("✅ Can receive next input (but still locked movement)");
+        Debug.Log("✅ Can receive next input");
     }
 
     public void DisableNextInput()
@@ -187,9 +180,7 @@ public class AttackComboController : MonoBehaviour
         canReceiveInput = false;
 
         if (currentCombo != 3)
-        {
             ResetCombo();
-        }
 
         Debug.Log("🛑 Input disabled");
     }
@@ -212,30 +203,26 @@ public class AttackComboController : MonoBehaviour
         Debug.Log("🔓 Movement UNLOCKED");
     }
 
-    // ✅ PUBLIC: Force reset khi bị interrupt (impact, stun, etc)
+    // ✅ Force reset khi bị interrupt (impact, stun, etc)
     public void ForceResetCombo()
     {
-        // Cancel combo ngay lập tức
         currentCombo = 0;
         canReceiveInput = false;
         isExecutingAttack = false;
         isDashing = false;
 
-        // Reset animator states
         animator.SetBool("isAttacking", false);
         animator.SetInteger("attackIndex", 0);
 
-        // Disable weapon hitbox
         if (weaponHitbox != null)
-        {
             weaponHitbox.DisableDamage();
-        }
 
-        // Cancel any pending invokes
         CancelInvoke(nameof(ClearAttackIndex));
 
         Debug.Log("⚠️ FORCED COMBO RESET (interrupted)");
     }
+
+    // ===== ANIMATION EVENTS: Weapon Damage =====
 
     public void EnableWeaponDamage()
     {
@@ -246,7 +233,8 @@ public class AttackComboController : MonoBehaviour
         }
         else
         {
-            Debug.LogError("❌ WeaponHitbox is NULL!");
+            // ✅ Warning thay vì Error — có thể player chưa equip weapon
+            Debug.LogWarning("⚠ EnableWeaponDamage called but no weapon equipped.");
         }
     }
 
@@ -254,9 +242,7 @@ public class AttackComboController : MonoBehaviour
     {
         Debug.Log("📣 DisableWeaponDamage()");
         if (weaponHitbox != null)
-        {
             weaponHitbox.DisableDamage();
-        }
     }
 
     public void DashForward()

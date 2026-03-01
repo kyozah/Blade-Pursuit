@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 985e9de69b07e6844aa5a8ddd2d5e71c, type: 3}
+  m_Name: Default sword
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: Default sword
+  weaponPrefab: {fileID: 3473967074978650048, guid: 91a28e9cdf9f8b64d9747fff10d10368, type: 3}
+  holdPositionOffset: {x: -0.297, y: 0.142, z: 0.058}
+  holdRotationOffset: {x: -12.681, y: -86.565, z: -95.216}
+  groundHeight: 0.4
+  floatHeight: 0.2
+  floatSpeed: 2
+  rotationSpeed: 60
+  baseDamage: 1000
+  knockbackForce: 10
+  knockbackUpwardForce: 2
+  hitboxSize: {x: 0, y: 0, z: 0}
+  hitboxOffset: {x: 0, y: 0, z: 0}
