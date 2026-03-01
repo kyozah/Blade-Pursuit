@@ -148187,11 +148187,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8520840780627657522, guid: 13aaf52d69c6f434fa8c4bb6713baa6d, type: 3}
       propertyPath: m_LocalPosition.x
-<<<<<<< Updated upstream:Assets/Assets/Scenes/SampleScene.unity
-      value: 807.8
-=======
-      value: 867.72
->>>>>>> Stashed changes:Assets/Assets/Scenes/Sence game.unity
+      value: 252
       objectReference: {fileID: 0}
     - target: {fileID: 8520840780627657522, guid: 13aaf52d69c6f434fa8c4bb6713baa6d, type: 3}
       propertyPath: m_LocalPosition.y
@@ -148199,11 +148195,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8520840780627657522, guid: 13aaf52d69c6f434fa8c4bb6713baa6d, type: 3}
       propertyPath: m_LocalPosition.z
-<<<<<<< Updated upstream:Assets/Assets/Scenes/SampleScene.unity
-      value: 303
-=======
-      value: 306.6
->>>>>>> Stashed changes:Assets/Assets/Scenes/Sence game.unity
+      value: 209
       objectReference: {fileID: 0}
     - target: {fileID: 8520840780627657522, guid: 13aaf52d69c6f434fa8c4bb6713baa6d, type: 3}
       propertyPath: m_LocalRotation.w
@@ -148289,13 +148281,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9010518851980958088, guid: 13aaf52d69c6f434fa8c4bb6713baa6d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2085403461}
-    - targetCorrespondingSourceObject: {fileID: 9010518851980958088, guid: 13aaf52d69c6f434fa8c4bb6713baa6d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2085403463}
-    - targetCorrespondingSourceObject: {fileID: 9010518851980958088, guid: 13aaf52d69c6f434fa8c4bb6713baa6d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2085403462}
->>>>>>> Stashed changes:Assets/Assets/Scenes/Sence game.unity
   m_SourcePrefab: {fileID: 100100000, guid: 13aaf52d69c6f434fa8c4bb6713baa6d, type: 3}
 --- !u!1001 &1918903996
 PrefabInstance:
@@ -160137,38 +160122,6 @@ MonoBehaviour:
   deathAudioSource: {fileID: 0}
   useRandomPitch: 0
   pitchVariation: 1
---- !u!114 &2085403462
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2085403460}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 352712e75c94e9942bf6073574fee3d1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
-  interactRange: 7.91
-  interactLayer:
-    serializedVersion: 2
-    m_Bits: 256
-  interactKey: 101
---- !u!114 &2085403463
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2085403460}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62f7f707649b60845b24ac2a270a83d5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponManager
-  weaponHolder: {fileID: 567669371}
-  showDebugInfo: 1
->>>>>>> Stashed changes:Assets/Assets/Scenes/Sence game.unity
 --- !u!1 &2087146569
 GameObject:
   m_ObjectHideFlags: 0
@@ -168544,6 +168497,3 @@ SceneRoots:
   - {fileID: 1035561379}
   - {fileID: 985949541}
   - {fileID: 1699314900}
-  - {fileID: 8082463866129586678}
-  - {fileID: 837100606}
->>>>>>> Stashed changes:Assets/Assets/Scenes/Sence game.unity

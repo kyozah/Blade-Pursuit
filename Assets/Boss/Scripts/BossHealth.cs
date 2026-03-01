@@ -1,15 +1,8 @@
 ﻿using UnityEngine;
+using System;
 
 public class BossHealth : MonoBehaviour
 {
-<<<<<<< Updated upstream
-    public float MaxHP = 1000f;
-    public float CurrentHP;
-
-    void Awake()
-    {
-        CurrentHP = MaxHP;
-=======
     public string BossName = "Boss";
     public Sprite BossIcon;
 
@@ -36,15 +29,17 @@ public class BossHealth : MonoBehaviour
         // Ẩn rương ngay từ đầu
         if (rewardChest != null)
             rewardChest.SetActive(false);
->>>>>>> Stashed changes
     }
 
     public void TakeDamage(float dmg)
     {
         CurrentHP -= dmg;
+        CurrentHP = Mathf.Clamp(CurrentHP, 0f, MaxHP);
+        OnHealthChanged?.Invoke(CurrentHP, MaxHP);
 
-        if (CurrentHP <= 0)
+        if (CurrentHP <= 0f)
         {
+            OnDied?.Invoke();
             GetComponentInParent<BossBrain>().OnDie();
 
             if (rewardChest != null)
