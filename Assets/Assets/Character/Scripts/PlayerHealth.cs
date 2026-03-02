@@ -392,33 +392,4 @@ public class PlayerHealth : MonoBehaviour
             gameObject.layer = originalLayer;
         }
     }
-
-    // ===== DEBUG =====
-
-    void OnGUI()
-    {
-        if (isDead) return;
-
-        float barWidth = 200f;
-        float barHeight = 20f;
-        float barX = 10f;
-        float barY = 10f;
-
-        GUI.Box(new Rect(barX, barY, barWidth, barHeight), "");
-
-        float healthWidth = barWidth * (currentHealth / maxHealth);
-        GUI.color = Color.red;
-        GUI.Box(new Rect(barX, barY, healthWidth, barHeight), "");
-        GUI.color = Color.white;
-
-        GUI.Label(new Rect(barX + 5, barY + 2, barWidth, barHeight),
-                  $"HP: {currentHealth:F0}/{maxHealth:F0}");
-
-        if (isInImpact)
-        {
-            GUI.color = Color.yellow;
-            GUI.Label(new Rect(barX, barY + 25, 200, 20), "IMPACT - LOCKED");
-            GUI.color = Color.white;
-        }
-    }
 }
