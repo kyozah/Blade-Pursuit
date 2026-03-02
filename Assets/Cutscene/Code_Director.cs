@@ -71,7 +71,9 @@ public class IntroMasterDirector : MonoBehaviour
         if (impulseSource != null) impulseSource.GenerateImpulse();
 
         yield return StartCoroutine(TypeText("Nhưng đặc ân của dòng máu cũng chính là mầm mống tai họa. Đêm không trăng đó... Hư Không đã tìm đến. Nó không xâm lược, nó chỉ ăn mòn."));
-        
+        yield return StartCoroutine(TypeText("Vị lãnh chúa tận tụy đã chọn sự sa ngã để bảo vệ thần dân theo cách méo mó nhất. Nhân tính bị vứt bỏ, chỉ còn lại cơn khát thanh trừng."));
+        subtitleText.text = "";
+        yield return new WaitForSeconds(1f);
         Debug.Log("Đang chờ cảnh CloseUp: " + timeCloseUp + " giây");
         yield return new WaitForSeconds(timeCloseUp);
 
@@ -79,8 +81,7 @@ public class IntroMasterDirector : MonoBehaviour
         subtitleText.text = "";
         SwitchCamera(camPOV);
         
-        yield return StartCoroutine(TypeText("Vị lãnh chúa tận tụy đã chọn sự sa ngã để bảo vệ thần dân theo cách méo mó nhất. Nhân tính bị vứt bỏ, chỉ còn lại cơn khát thanh trừng."));
-        subtitleText.text = "";
+
         yield return StartCoroutine(TypeText("Chạy đi, Aleksandr! Đừng nhìn lại!"));
         Debug.Log("Đang chờ cảnh POV: " + timePOV + " giây");
         yield return new WaitForSeconds(timePOV);
