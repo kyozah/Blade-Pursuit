@@ -79,8 +79,9 @@ public class IntroMasterDirector : MonoBehaviour
         subtitleText.text = "";
         SwitchCamera(camPOV);
         
+        yield return StartCoroutine(TypeText("Vị lãnh chúa tận tụy đã chọn sự sa ngã để bảo vệ thần dân theo cách méo mó nhất. Nhân tính bị vứt bỏ, chỉ còn lại cơn khát thanh trừng."));
+        subtitleText.text = "";
         yield return StartCoroutine(TypeText("Chạy đi, Aleksandr! Đừng nhìn lại!"));
-        
         Debug.Log("Đang chờ cảnh POV: " + timePOV + " giây");
         yield return new WaitForSeconds(timePOV);
 
