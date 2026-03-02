@@ -6,60 +6,98 @@ public class WeaponHitbox : MonoBehaviour
 {
     [Header("Damage")]
     public float damage = 20f;
+    public float knockbackForce = 10f;
+    public float knockbackUpwardForce = 2f;
 
     [Header("Hit Detection")]
+    [Tooltip("Delay trước khi hitbox active")]
     public float activationDelay = 0.05f;
 
+    [Tooltip("Đẩy enemies đang overlap trước khi enable")]
     public bool pushOverlappingEnemies = true;
+
+    [Tooltip("Lực đẩy enemies overlap")]
     public float pushForce = 15f;
 
+    [Header("Tags")]
+    [Tooltip("Tag của enemy thường")]
+    public string enemyTag = "Enemy";
+
+    [Tooltip("Tag của boss")]
+    public string bossTag = "Boss";
+
     private bool canDealDamage = false;
-    private List<Collider> hitTargets = new List<Collider>();
+    private List<Collider> hitEnemies = new List<Collider>();
     private Coroutine enableCoroutine;
+
+    void Start()
+    {
+        Debug.Log($"⚔️ WeaponHitbox initialized: Damage={damage}, Knockback={knockbackForce}");
+    }
 
     void OnTriggerEnter(Collider other)
     {
-        TryDealDamage(other);
-    }
-
-    void OnTriggerStay(Collider other)
-    {
-        TryDealDamage(other);
-    }
-
-    void TryDealDamage(Collider other)
-    {
         if (!canDealDamage) return;
-        if (hitTargets.Contains(other)) return;
+        if (hitEnemies.Contains(other)) return;
 
-        // ================= ENEMY =================
-        if (other.CompareTag("Enemy"))
+        if (other.CompareTag(enemyTag))
         {
-            Enemy enemy = other.GetComponent<Enemy>();
-            if (enemy != null)
-            {
-                Vector3 playerForward = transform.root.forward;
-                enemy.TakeDamage(damage, transform.root.position, playerForward);
-
-                hitTargets.Add(other);
-            }
+            DealDamageToEnemy(other);
         }
-
-        // ================= BOSS =================
-        else if (other.CompareTag("Boss"))
+        else if (other.CompareTag(bossTag))
         {
-            BossHealth bossHealth = other.GetComponentInParent<BossHealth>();
-            if (bossHealth != null)
-            {
-                bossHealth.TakeDamage(damage);
-                hitTargets.Add(other);
-            }
+            DealDamageToBoss(other);
         }
+    }
+
+    void DealDamageToEnemy(Collider enemyCollider)
+    {
+        Enemy enemy = enemyCollider.GetComponent<Enemy>();
+        if (enemy == null)
+            enemy = enemyCollider.GetComponentInParent<Enemy>();
+
+        if (enemy != null)
+        {
+            Vector3 playerForward = transform.root.forward;
+            enemy.TakeDamage(damage, transform.root.position, playerForward);
+            OverrideEnemyKnockback(enemy);
+            hitEnemies.Add(enemyCollider);
+            Debug.Log($"✅ Dealt {damage} damage to Enemy: {enemyCollider.gameObject.name}");
+        }
+        else
+        {
+            Debug.LogError($"❌ No Enemy component on {enemyCollider.gameObject.name}!");
+        }
+    }
+
+    void DealDamageToBoss(Collider bossCollider)
+    {
+        // Tìm BossHealth trên chính object hoặc parent
+        BossHealth bossHealth = bossCollider.GetComponent<BossHealth>();
+        if (bossHealth == null)
+            bossHealth = bossCollider.GetComponentInParent<BossHealth>();
+
+        if (bossHealth != null)
+        {
+            bossHealth.TakeDamage(damage);
+            hitEnemies.Add(bossCollider);
+            Debug.Log($"✅ Dealt {damage} damage to Boss: {bossCollider.gameObject.name}");
+        }
+        else
+        {
+            Debug.LogError($"❌ No BossHealth component on {bossCollider.gameObject.name}!");
+        }
+    }
+
+    void OverrideEnemyKnockback(Enemy enemy)
+    {
+        enemy.knockbackForce = knockbackForce;
+        enemy.knockbackUpwardForce = knockbackUpwardForce;
     }
 
     public void EnableDamage()
     {
-        hitTargets.Clear();
+        hitEnemies.Clear();
 
         if (enableCoroutine != null)
             StopCoroutine(enableCoroutine);
@@ -76,6 +114,73 @@ public class WeaponHitbox : MonoBehaviour
             yield return new WaitForSeconds(activationDelay);
 
         canDealDamage = true;
+        Debug.Log($"🗡️ Weapon damage ENABLED - Damage: {damage}");
+
+        CheckForTargetsInHitbox();
+    }
+
+    void CheckForTargetsInHitbox()
+    {
+        Collider hitboxCollider = GetComponent<Collider>();
+        if (hitboxCollider == null) return;
+
+        Collider[] overlapping = Physics.OverlapBox(
+            hitboxCollider.bounds.center,
+            hitboxCollider.bounds.extents,
+            transform.rotation
+        );
+
+        foreach (Collider col in overlapping)
+        {
+            if (hitEnemies.Contains(col)) continue;
+
+            if (col.CompareTag(enemyTag))
+                DealDamageToEnemy(col);
+            else if (col.CompareTag(bossTag))
+                DealDamageToBoss(col);
+        }
+    }
+
+    void PushOverlappingEnemies()
+    {
+        Collider hitboxCollider = GetComponent<Collider>();
+        if (hitboxCollider == null) return;
+
+        Collider[] overlapping = Physics.OverlapBox(
+            hitboxCollider.bounds.center,
+            hitboxCollider.bounds.extents,
+            transform.rotation
+        );
+
+        int pushedCount = 0;
+
+        foreach (Collider col in overlapping)
+        {
+            if (col.CompareTag(enemyTag) || col.CompareTag(bossTag))
+            {
+                Rigidbody enemyRb = col.GetComponent<Rigidbody>();
+                if (enemyRb == null)
+                    enemyRb = col.GetComponentInParent<Rigidbody>();
+
+                if (enemyRb != null)
+                {
+                    Vector3 pushDirection = transform.root.forward;
+                    pushDirection.y = 0;
+                    pushDirection.Normalize();
+
+                    Vector3 pushVelocity = pushDirection * pushForce;
+                    pushVelocity.y = 1f;
+
+                    enemyRb.WakeUp();
+                    enemyRb.linearVelocity = pushVelocity;
+
+                    pushedCount++;
+                }
+            }
+        }
+
+        if (pushedCount > 0)
+            Debug.Log($"⚡ Pushed {pushedCount} targets");
     }
 
     public void DisableDamage()
@@ -87,31 +192,18 @@ public class WeaponHitbox : MonoBehaviour
             StopCoroutine(enableCoroutine);
             enableCoroutine = null;
         }
+
+        Debug.Log("🛡️ Weapon damage DISABLED");
     }
 
-    void PushOverlappingEnemies()
+    void OnDrawGizmos()
     {
-        Collider hitbox = GetComponent<Collider>();
-        if (hitbox == null) return;
+        BoxCollider box = GetComponent<BoxCollider>();
+        if (box == null) return;
 
-        Collider[] overlapping = Physics.OverlapBox(
-            hitbox.bounds.center,
-            hitbox.bounds.extents,
-            transform.rotation
-        );
-
-        foreach (Collider col in overlapping)
-        {
-            if (!col.CompareTag("Enemy")) continue;
-
-            Rigidbody rb = col.GetComponent<Rigidbody>();
-            if (rb == null) continue;
-
-            Vector3 dir = transform.root.forward;
-            dir.y = 0;
-            dir.Normalize();
-
-            rb.linearVelocity = dir * pushForce + Vector3.up;
-        }
+        Gizmos.color = canDealDamage ? new Color(1f, 0f, 0f, 0.5f) : new Color(0.5f, 0.5f, 0.5f, 0.3f);
+        Gizmos.matrix = transform.localToWorldMatrix;
+        Gizmos.DrawCube(box.center, box.size);
+        Gizmos.DrawWireCube(box.center, box.size);
     }
 }

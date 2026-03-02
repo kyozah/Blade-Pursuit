@@ -31,12 +31,17 @@ ModelImporter:
   - first:
       43: 4300002
     second: SM_Fence_03_LOD0
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Fbx Default Material
+    second: {fileID: 2100000, guid: 38db54ff55c98684983f173d68ed7b15, type: 2}
   materials:
     materialImportMode: 1
     materialName: 2
-    materialSearch: 1
-    materialLocation: 0
+    materialSearch: 0
+    materialLocation: 1
   animations:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
