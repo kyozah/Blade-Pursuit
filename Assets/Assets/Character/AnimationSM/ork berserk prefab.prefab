@@ -11492,7 +11492,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5783773701163634531}
   serializedVersion: 5
-  m_Mass: 7
+  m_Mass: 1000
   m_LinearDamping: 0
   m_AngularDamping: 2
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -11523,7 +11523,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4bae628bd637004981eceb9077f527b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tank
-  maxHealth: 200
+  maxHealth: 75
   attackDamage: 6
   detectionRange: 20
   attackRange: 5.5
@@ -11531,16 +11531,17 @@ MonoBehaviour:
   moveSpeed: 3
   invertFacing: 0
   rotationSpeed: 720
-  attackDelay: 0.1
+  attackDelay: 0.5
   attackCooldownOverride: -1
-  knockbackForce: 5
-  knockbackUpwardForce: 2
+  knockbackForce: 2
+  knockbackUpwardForce: 1
   knockbackDuration: 0.3
-  knockbackDrag: 8
+  knockbackDrag: 4
   usePlayerForwardDirection: 1
   showDebugInfo: 1
   deathAnimationDuration: 6
   useDeathAnimationEvent: 0
+  damageStunDuration: 2
   attackHitDelay: 0.6
 --- !u!114 &-4514430412592180376
 MonoBehaviour:

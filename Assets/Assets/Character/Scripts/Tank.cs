@@ -10,12 +10,12 @@ public class Tank : Enemy
     protected override void Start()
     {
         // Configure Tank-specific stats before base.Start so health is initialized correctly
-        maxHealth = 200f;
+        maxHealth = 75f;
         attackDamage = 15f;
         attackDelay = 1.5f; // total attack animation duration / cooldown window
         moveSpeed = 4f; // very slow movement (doubled)
         detectionRange = 20f;
-        attackRange = 5.5f;
+        attackRange = 4.5f;
         knockbackForce = 5f;
         knockbackUpwardForce = 1f;
         gameObject.name = "Tank";

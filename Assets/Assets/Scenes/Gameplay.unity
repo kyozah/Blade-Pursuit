@@ -29512,12 +29512,12 @@ MonoBehaviour:
   tankPrefab: {fileID: 5783773701163634531, guid: b759f5d79bf4f7c458458f1a9f37019b, type: 3}
   skeletonWeight: 0.5
   flyWeight: 0.3
-  tankWeight: 0.2
+  tankWeight: 1
   allowSkeleton: 0
   allowFly: 0
   allowTank: 1
   maxFlyPerZone: 1
-  maxEnemies: 5
+  maxEnemies: 3
   spawnRadius: 10
   spawnHeight: 0
   attackCooldown: 0
@@ -32425,7 +32425,7 @@ MonoBehaviour:
   tankPrefab: {fileID: 5783773701163634531, guid: b759f5d79bf4f7c458458f1a9f37019b, type: 3}
   skeletonWeight: 0.5
   flyWeight: 0.3
-  tankWeight: 0.2
+  tankWeight: 1
   allowSkeleton: 1
   allowFly: 0
   allowTank: 0
@@ -46964,7 +46964,7 @@ MonoBehaviour:
   tankPrefab: {fileID: 5783773701163634531, guid: b759f5d79bf4f7c458458f1a9f37019b, type: 3}
   skeletonWeight: 0.5
   flyWeight: 0.3
-  tankWeight: 0.2
+  tankWeight: 1
   allowSkeleton: 0
   allowFly: 1
   allowTank: 0
@@ -48418,10 +48418,10 @@ MonoBehaviour:
   shoulderHitbox: {fileID: 0}
   impactEffect: {fileID: 1912362522}
   spawnPoint: {fileID: 637782099}
-  vfxScale: 8.3
+  vfxScale: 14.19
   impactEffect1: {fileID: 1565998015}
   spawnPoint1: {fileID: 1565998016}
-  vfxScale1: 4.31
+  vfxScale1: 4.02
   yOffset: 0.1
 --- !u!1001 &637827206
 PrefabInstance:
@@ -64458,7 +64458,7 @@ MonoBehaviour:
   tankPrefab: {fileID: 5783773701163634531, guid: b759f5d79bf4f7c458458f1a9f37019b, type: 3}
   skeletonWeight: 0.5
   flyWeight: 0.3
-  tankWeight: 0.2
+  tankWeight: 1
   allowSkeleton: 0
   allowFly: 1
   allowTank: 0
@@ -86277,7 +86277,7 @@ MonoBehaviour:
   tankPrefab: {fileID: 5783773701163634531, guid: b759f5d79bf4f7c458458f1a9f37019b, type: 3}
   skeletonWeight: 0.5
   flyWeight: 0.3
-  tankWeight: 0.2
+  tankWeight: 1
   allowSkeleton: 0
   allowFly: 0
   allowTank: 1
@@ -92958,9 +92958,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.09
-  m_Height: 0.52
+  m_Height: 0.43239707
   m_Direction: 1
-  m_Center: {x: 0, y: 0.22, z: 0}
+  m_Center: {x: 0, y: 0.26380172, z: 0}
 --- !u!114 &1129662398
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -92975,7 +92975,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BossHealth
   BossName: Boss
   BossIcon: {fileID: 21300000, guid: 07d0d0ec2f8effd47b5f4a309639abb2, type: 3}
-  MaxHP: 100
+  MaxHP: 300
   CurrentHP: 0
   rewardChest: {fileID: 393262891}
   chestRevealDelay: 2
@@ -93036,7 +93036,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1129662394}
   serializedVersion: 5
-  m_Mass: 5
+  m_Mass: 10000
   m_LinearDamping: 0
   m_AngularDamping: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -106897,7 +106897,7 @@ MonoBehaviour:
   tankPrefab: {fileID: 5783773701163634531, guid: b759f5d79bf4f7c458458f1a9f37019b, type: 3}
   skeletonWeight: 0.5
   flyWeight: 0.3
-  tankWeight: 0.2
+  tankWeight: 1
   allowSkeleton: 0
   allowFly: 1
   allowTank: 0
@@ -125095,7 +125095,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1908886405705607446, guid: ff49dc7c04963ca499da8bce1a2cabf2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.1272
+      value: -0.069
       objectReference: {fileID: 0}
     - target: {fileID: 1908886405705607446, guid: ff49dc7c04963ca499da8bce1a2cabf2, type: 3}
       propertyPath: m_LocalPosition.z
@@ -133573,7 +133573,7 @@ MonoBehaviour:
   tankPrefab: {fileID: 5783773701163634531, guid: b759f5d79bf4f7c458458f1a9f37019b, type: 3}
   skeletonWeight: 0.5
   flyWeight: 0.3
-  tankWeight: 0.2
+  tankWeight: 1
   allowSkeleton: 1
   allowFly: 0
   allowTank: 0
@@ -153770,7 +153770,7 @@ MonoBehaviour:
   tankPrefab: {fileID: 5783773701163634531, guid: b759f5d79bf4f7c458458f1a9f37019b, type: 3}
   skeletonWeight: 0.5
   flyWeight: 0.3
-  tankWeight: 0.2
+  tankWeight: 1
   allowSkeleton: 0
   allowFly: 0
   allowTank: 1

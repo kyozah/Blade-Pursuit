@@ -20,8 +20,8 @@ MonoBehaviour:
   floatHeight: 0.2
   floatSpeed: 2
   rotationSpeed: 60
-  baseDamage: 1000
-  knockbackForce: 10
+  baseDamage: 20
+  knockbackForce: 6.7
   knockbackUpwardForce: 2
   hitboxSize: {x: 0, y: 0, z: 0}
   hitboxOffset: {x: 0, y: 0, z: 0}
