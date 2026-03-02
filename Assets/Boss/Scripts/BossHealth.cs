@@ -43,8 +43,11 @@ public class BossHealth : MonoBehaviour
         CurrentHP = Mathf.Clamp(CurrentHP, 0f, MaxHP);
         OnHealthChanged?.Invoke(CurrentHP, MaxHP);
 
+        Debug.Log($"[BossHealth] {BossName} took {dmg} damage. HP: {CurrentHP}/{MaxHP}");
+
         if (CurrentHP <= 0f)
         {
+            Debug.Log($"[BossHealth] ☠️ {BossName} DIED! Firing OnDied event.");
             OnDied?.Invoke();
             GetComponentInParent<BossBrain>().OnDie();
 

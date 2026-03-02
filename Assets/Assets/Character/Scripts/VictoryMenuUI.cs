@@ -54,22 +54,47 @@ public class VictoryMenuUI : MonoBehaviour
         else
             Debug.LogWarning("[VictoryMenuUI] Quit button not assigned");
 
-        // subscribe to boss deaths if any assigned
-        if (bosses != null && bosses.Length > 0)
+        // Auto-find bosses if not assigned
+        if (bosses == null || bosses.Length == 0)
         {
-            deadBossCount = 0;
-            foreach (var bh in bosses)
+            Debug.LogWarning("[VictoryMenuUI] No bosses assigned. Attempting auto-discovery...");
+            bosses = Object.FindObjectsOfType<BossHealth>();
+            if (bosses != null && bosses.Length > 0)
             {
-                if (bh != null)
-                    bh.OnDied += HandleBossDied;
+                Debug.Log($"[VictoryMenuUI] Auto-discovered {bosses.Length} boss(es)");
             }
-            Debug.Log($"[VictoryMenuUI] Subscribed to {bosses.Length} boss(es)");
+            else
+            {
+                Debug.LogError("[VictoryMenuUI] No bosses found in scene! Either assign them manually or ensure BossHealth components exist.");
+                return;
+            }
         }
-        else
+
+        // Validate and filter out null bosses
+        System.Collections.Generic.List<BossHealth> validBosses = new System.Collections.Generic.List<BossHealth>();
+        foreach (var bh in bosses)
         {
-            // fallback to GameManager if no bosses configured
-            Debug.Log("[VictoryMenuUI] No bosses assigned, falling back to GameManager event");
+            if (bh != null)
+                validBosses.Add(bh);
+            else
+                Debug.LogWarning("[VictoryMenuUI] Found null element in bosses array!");
         }
+        
+        if (validBosses.Count == 0)
+        {
+            Debug.LogError("[VictoryMenuUI] No valid bosses found!");
+            return;
+        }
+
+        bosses = validBosses.ToArray();
+        
+        // subscribe to boss deaths
+        deadBossCount = 0;
+        foreach (var bh in bosses)
+        {
+            bh.OnDied += HandleBossDied;
+        }
+        Debug.Log($"[VictoryMenuUI] ✅ Successfully subscribed to {bosses.Length} boss(es). Victory will show when all {bosses.Length} are defeated.");
     }
 
 
@@ -89,10 +114,17 @@ public class VictoryMenuUI : MonoBehaviour
     {
         deadBossCount++;
         Debug.Log($"[VictoryMenuUI] Boss died ({deadBossCount}/{bosses.Length})");
-        if (deadBossCount >= bosses.Length)
+        
+        // Check if ALL configured bosses are dead before showing victory
+        if (bosses != null && bosses.Length > 0 && deadBossCount >= bosses.Length)
         {
+            Debug.Log($"[VictoryMenuUI] All {bosses.Length} bosses defeated! Showing victory menu after {victoryDelay}s");
             // all bosses dead – wait a moment (e.g. death animation) then show menu
             StartCoroutine(ShowVictoryMenuAfterDelay(victoryDelay));
+        }
+        else if (bosses != null)
+        {
+            Debug.Log($"[VictoryMenuUI] Waiting for more bosses to die... {bosses.Length - deadBossCount} remaining");
         }
     }
 

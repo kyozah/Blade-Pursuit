@@ -130,14 +130,33 @@ public class WeaponHitbox : MonoBehaviour
             transform.rotation
         );
 
+        // Find closest target to avoid hitting multiple bosses at the same time
+        Collider closestTarget = null;
+        float closestDistance = float.MaxValue;
+        Vector3 weaponPos = transform.position;
+
         foreach (Collider col in overlapping)
         {
             if (hitEnemies.Contains(col)) continue;
 
-            if (col.CompareTag(enemyTag))
-                DealDamageToEnemy(col);
-            else if (col.CompareTag(bossTag))
-                DealDamageToBoss(col);
+            if (col.CompareTag(enemyTag) || col.CompareTag(bossTag))
+            {
+                float distance = Vector3.Distance(weaponPos, col.transform.position);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closestTarget = col;
+                }
+            }
+        }
+
+        // Only hit the closest target
+        if (closestTarget != null)
+        {
+            if (closestTarget.CompareTag(enemyTag))
+                DealDamageToEnemy(closestTarget);
+            else if (closestTarget.CompareTag(bossTag))
+                DealDamageToBoss(closestTarget);
         }
     }
 
@@ -152,35 +171,45 @@ public class WeaponHitbox : MonoBehaviour
             transform.rotation
         );
 
-        int pushedCount = 0;
+        // Only push the closest target
+        Collider closestTarget = null;
+        float closestDistance = float.MaxValue;
+        Vector3 weaponPos = transform.position;
 
         foreach (Collider col in overlapping)
         {
             if (col.CompareTag(enemyTag) || col.CompareTag(bossTag))
             {
-                Rigidbody enemyRb = col.GetComponent<Rigidbody>();
-                if (enemyRb == null)
-                    enemyRb = col.GetComponentInParent<Rigidbody>();
-
-                if (enemyRb != null)
+                float distance = Vector3.Distance(weaponPos, col.transform.position);
+                if (distance < closestDistance)
                 {
-                    Vector3 pushDirection = transform.root.forward;
-                    pushDirection.y = 0;
-                    pushDirection.Normalize();
-
-                    Vector3 pushVelocity = pushDirection * pushForce;
-                    pushVelocity.y = 1f;
-
-                    enemyRb.WakeUp();
-                    enemyRb.linearVelocity = pushVelocity;
-
-                    pushedCount++;
+                    closestDistance = distance;
+                    closestTarget = col;
                 }
             }
         }
 
-        if (pushedCount > 0)
-            Debug.Log($"⚡ Pushed {pushedCount} targets");
+        if (closestTarget != null)
+        {
+            Rigidbody targetRb = closestTarget.GetComponent<Rigidbody>();
+            if (targetRb == null)
+                targetRb = closestTarget.GetComponentInParent<Rigidbody>();
+
+            if (targetRb != null)
+            {
+                Vector3 pushDirection = transform.root.forward;
+                pushDirection.y = 0;
+                pushDirection.Normalize();
+
+                Vector3 pushVelocity = pushDirection * pushForce;
+                pushVelocity.y = 1f;
+
+                targetRb.WakeUp();
+                targetRb.linearVelocity = pushVelocity;
+
+                Debug.Log($"⚡ Pushed closest target: {closestTarget.gameObject.name}");
+            }
+        }
     }
 
     public void DisableDamage()
