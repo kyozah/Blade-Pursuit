@@ -9,6 +9,9 @@ public class BossBrain : MonoBehaviour
     public float detectRange = 12f;
     public float meleeRange = 2.5f;
 
+    [Header("Boss UI")]
+    public BossHealthScreenUI bossHealthScreenUI;
+
     [Header("Attack 2")]
     public float chargeMoveTime = 2.5f;
     public float chargeCooldown = 5f;
@@ -51,6 +54,13 @@ public class BossBrain : MonoBehaviour
 
         float dist = Vector3.Distance(transform.position, player.position);
 
+        // Always check if player is in detection range and show UI
+        if (!hasRoaredOnce && dist <= detectRange)
+        {
+            ShowBossUI();
+            hasRoaredOnce = true;
+        }
+
         switch (currentState)
         {
             case State.Idle:
@@ -87,27 +97,35 @@ public class BossBrain : MonoBehaviour
     {
         movement.LookAt(player.position);
 
-        if (!hasRoaredOnce && dist <= detectRange)
+        if (dist <= detectRange)
         {
-            Debug.Log($"[BossBrain] Player detected! Distance: {dist}, Range: {detectRange}");
-            hasRoaredOnce = true;
-            // Notify UI to show boss name intro (bind UI to this boss)
-            if (BossUIManager.Instance != null)
-            {
-                Debug.Log("[BossBrain] Calling BossUIManager.Instance.ShowBoss(this)");
-                BossUIManager.Instance.ShowBoss(this);
-            }
-            else
-            {
-                Debug.LogError("[BossBrain] BossUIManager.Instance is NULL!");
-            }
             currentState = State.Roar;
             combat.DoRoar1();
-            return;
         }
+    }
 
-        if (dist <= detectRange)
-            currentState = State.Move;
+    /// <summary>
+    /// Show the boss UI when player is detected
+    /// </summary>
+    void ShowBossUI()
+    {
+        Debug.Log($"[BossBrain] Player detected! Showing UI");
+
+        // Show this boss's UI if assigned
+        if (bossHealthScreenUI != null)
+        {
+            BossHealth bHealth = GetComponentInChildren<BossHealth>();
+            if (bHealth != null)
+            {
+                bossHealthScreenUI.BindToBoss(bHealth);
+                bossHealthScreenUI.ShowNameIntro();
+                Debug.Log($"[BossBrain] Showed UI for boss");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[BossBrain] bossHealthScreenUI not assigned!");
+        }
     }
 
     void HandleMove(float dist)
