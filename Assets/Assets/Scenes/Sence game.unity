@@ -15914,7 +15914,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5373052649726246825, guid: b4e69772d77f2484c8658768c8ae6c4a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 243
+      value: 610.79535
       objectReference: {fileID: 0}
     - target: {fileID: 5373052649726246825, guid: b4e69772d77f2484c8658768c8ae6c4a, type: 3}
       propertyPath: m_LocalPosition.y
@@ -15922,23 +15922,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5373052649726246825, guid: b4e69772d77f2484c8658768c8ae6c4a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 186.6
+      value: 472.99036
       objectReference: {fileID: 0}
     - target: {fileID: 5373052649726246825, guid: b4e69772d77f2484c8658768c8ae6c4a, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.7071068
+      value: 0.7022401
       objectReference: {fileID: 0}
     - target: {fileID: 5373052649726246825, guid: b4e69772d77f2484c8658768c8ae6c4a, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5373052649726246825, guid: b4e69772d77f2484c8658768c8ae6c4a, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.7071068
+      value: 0.7119402
       objectReference: {fileID: 0}
     - target: {fileID: 5373052649726246825, guid: b4e69772d77f2484c8658768c8ae6c4a, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5373052649726246825, guid: b4e69772d77f2484c8658768c8ae6c4a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -15946,7 +15946,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5373052649726246825, guid: b4e69772d77f2484c8658768c8ae6c4a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -90
+      value: 90.786
       objectReference: {fileID: 0}
     - target: {fileID: 5373052649726246825, guid: b4e69772d77f2484c8658768c8ae6c4a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -29559,6 +29559,87 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4616701503684788, guid: 39d703c5b34d9a54985ce84532b098da, type: 3}
   m_PrefabInstance: {fileID: 376802902}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &378208704
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 378208707}
+  - component: {fileID: 378208706}
+  - component: {fileID: 378208705}
+  m_Layer: 0
+  m_Name: EnemyManager_Zone1 (5)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &378208705
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 378208704}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 34.92, y: 8.22, z: 29.79}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &378208706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 378208704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 283350d10f554fb4eb5819b45aa6f1ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
+  skeletonPrefab: {fileID: 6488992509232211941, guid: 0ac202ca05cbd874d9658027971ff894, type: 3}
+  flyPrefab: {fileID: 755561605113938861, guid: 30853266b60133140ae8a67fd0d9f2ac, type: 3}
+  tankPrefab: {fileID: 0}
+  skeletonWeight: 0.5
+  flyWeight: 0.3
+  tankWeight: 0.2
+  allowSkeleton: 0
+  allowFly: 1
+  allowTank: 0
+  maxFlyPerZone: 1
+  maxEnemies: 2
+  spawnRadius: 10
+  spawnHeight: 0
+  attackCooldown: 2
+  showDebugInfo: 0
+--- !u!4 &378208707
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 378208704}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 594.4, y: 401.2, z: 132.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &379821017
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -34291,6 +34372,87 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4616701503684788, guid: 39d703c5b34d9a54985ce84532b098da, type: 3}
   m_PrefabInstance: {fileID: 444289597}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &445056503
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 445056506}
+  - component: {fileID: 445056505}
+  - component: {fileID: 445056504}
+  m_Layer: 0
+  m_Name: EnemyManager_Zone1 (4)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &445056504
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 445056503}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 34.92, y: 8.22, z: 29.79}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &445056505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 445056503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 283350d10f554fb4eb5819b45aa6f1ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
+  skeletonPrefab: {fileID: 6488992509232211941, guid: 0ac202ca05cbd874d9658027971ff894, type: 3}
+  flyPrefab: {fileID: 755561605113938861, guid: 30853266b60133140ae8a67fd0d9f2ac, type: 3}
+  tankPrefab: {fileID: 0}
+  skeletonWeight: 0.5
+  flyWeight: 0.3
+  tankWeight: 0.2
+  allowSkeleton: 0
+  allowFly: 1
+  allowTank: 0
+  maxFlyPerZone: 1
+  maxEnemies: 2
+  spawnRadius: 10
+  spawnHeight: 0
+  attackCooldown: 2
+  showDebugInfo: 0
+--- !u!4 &445056506
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 445056503}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 646.6, y: 401.2, z: 186.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &445616526
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -47788,10 +47950,10 @@ MonoBehaviour:
   shoulderHitbox: {fileID: 0}
   impactEffect: {fileID: 1912362522}
   spawnPoint: {fileID: 637782099}
-  vfxScale: 8.3
+  vfxScale: 4.76
   impactEffect1: {fileID: 1565998015}
   spawnPoint1: {fileID: 1565998016}
-  vfxScale1: 4.31
+  vfxScale1: 3.41
   yOffset: 0.1
 --- !u!1001 &637827206
 PrefabInstance:
@@ -72902,6 +73064,87 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4716142725687896, guid: a017b7cfc91c81844ae3bc1ed6d84d57, type: 3}
   m_PrefabInstance: {fileID: 929795793}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &930825025
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 930825028}
+  - component: {fileID: 930825027}
+  - component: {fileID: 930825026}
+  m_Layer: 0
+  m_Name: EnemyManager_Zone1 (6)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &930825026
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 930825025}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 34.92, y: 8.22, z: 29.79}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &930825027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 930825025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 283350d10f554fb4eb5819b45aa6f1ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
+  skeletonPrefab: {fileID: 6488992509232211941, guid: 0ac202ca05cbd874d9658027971ff894, type: 3}
+  flyPrefab: {fileID: 755561605113938861, guid: 30853266b60133140ae8a67fd0d9f2ac, type: 3}
+  tankPrefab: {fileID: 0}
+  skeletonWeight: 0.5
+  flyWeight: 0.3
+  tankWeight: 0.2
+  allowSkeleton: 1
+  allowFly: 1
+  allowTank: 0
+  maxFlyPerZone: 1
+  maxEnemies: 2
+  spawnRadius: 10
+  spawnHeight: 0
+  attackCooldown: 2
+  showDebugInfo: 0
+--- !u!4 &930825028
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 930825025}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 389.2, y: 401.2, z: 557.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &930905235
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -76691,6 +76934,87 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4284561292502240, guid: 6f4246912bea49942a823a954f93d157, type: 3}
   m_PrefabInstance: {fileID: 1308508428}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &983017560
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 983017563}
+  - component: {fileID: 983017562}
+  - component: {fileID: 983017561}
+  m_Layer: 0
+  m_Name: EnemyManager_Zone1 (3)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &983017561
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 983017560}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 34.92, y: 8.22, z: 29.79}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &983017562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 983017560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 283350d10f554fb4eb5819b45aa6f1ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
+  skeletonPrefab: {fileID: 6488992509232211941, guid: 0ac202ca05cbd874d9658027971ff894, type: 3}
+  flyPrefab: {fileID: 755561605113938861, guid: 30853266b60133140ae8a67fd0d9f2ac, type: 3}
+  tankPrefab: {fileID: 0}
+  skeletonWeight: 0.5
+  flyWeight: 0.3
+  tankWeight: 0.2
+  allowSkeleton: 0
+  allowFly: 1
+  allowTank: 0
+  maxFlyPerZone: 1
+  maxEnemies: 2
+  spawnRadius: 10
+  spawnHeight: 0
+  attackCooldown: 2
+  showDebugInfo: 0
+--- !u!4 &983017563
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 983017560}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 543.8, y: 401.2, z: 241.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &983166518
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -85022,15 +85346,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 283350d10f554fb4eb5819b45aa6f1ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
-  skeletonPrefab: {fileID: 0}
-  flyPrefab: {fileID: 0}
+  skeletonPrefab: {fileID: 6488992509232211941, guid: 0ac202ca05cbd874d9658027971ff894, type: 3}
+  flyPrefab: {fileID: 755561605113938861, guid: 30853266b60133140ae8a67fd0d9f2ac, type: 3}
   tankPrefab: {fileID: 0}
   skeletonWeight: 0.5
   flyWeight: 0.3
   tankWeight: 0.2
   allowSkeleton: 1
-  allowFly: 1
-  allowTank: 1
+  allowFly: 0
+  allowTank: 0
   maxFlyPerZone: 1
   maxEnemies: 2
   spawnRadius: 10
@@ -91467,8 +91791,8 @@ Transform:
   m_GameObject: {fileID: 1129662394}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.5594978, z: -0, w: 0.8288319}
-  m_LocalPosition: {x: 190.16, y: 402.77, z: 185.86}
-  m_LocalScale: {x: 28.910233, y: 28.8, z: 28.910233}
+  m_LocalPosition: {x: 625.06, y: 402.66, z: 476.68}
+  m_LocalScale: {x: 22.778084, y: 22.691233, z: 22.778084}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 637782099}
@@ -91513,7 +91837,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BossHealth
   BossName: Boss
   BossIcon: {fileID: 21300000, guid: 07d0d0ec2f8effd47b5f4a309639abb2, type: 3}
-  MaxHP: 100
+  MaxHP: 1000
   CurrentHP: 0
   rewardChest: {fileID: 393262891}
   chestRevealDelay: 2
@@ -133077,6 +133401,87 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4616701503684788, guid: 39d703c5b34d9a54985ce84532b098da, type: 3}
   m_PrefabInstance: {fileID: 1690297672}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1690667665
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1690667668}
+  - component: {fileID: 1690667667}
+  - component: {fileID: 1690667666}
+  m_Layer: 0
+  m_Name: EnemyManager_Zone1 (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &1690667666
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1690667665}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 34.92, y: 8.22, z: 29.79}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1690667667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1690667665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 283350d10f554fb4eb5819b45aa6f1ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
+  skeletonPrefab: {fileID: 6488992509232211941, guid: 0ac202ca05cbd874d9658027971ff894, type: 3}
+  flyPrefab: {fileID: 755561605113938861, guid: 30853266b60133140ae8a67fd0d9f2ac, type: 3}
+  tankPrefab: {fileID: 0}
+  skeletonWeight: 0.5
+  flyWeight: 0.3
+  tankWeight: 0.2
+  allowSkeleton: 1
+  allowFly: 1
+  allowTank: 0
+  maxFlyPerZone: 1
+  maxEnemies: 2
+  spawnRadius: 10
+  spawnHeight: 0
+  attackCooldown: 2
+  showDebugInfo: 0
+--- !u!4 &1690667668
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1690667665}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 463.4, y: 401.2, z: 468.4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1691289608
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -150762,6 +151167,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: -7.496636
       objectReference: {fileID: 0}
+    - target: {fileID: 7213111542323561651, guid: 13aaf52d69c6f434fa8c4bb6713baa6d, type: 3}
+      propertyPath: knockbackForce
+      value: 5.7
+      objectReference: {fileID: 0}
     - target: {fileID: 7240982089898457834, guid: 13aaf52d69c6f434fa8c4bb6713baa6d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 34.540718
@@ -167454,7 +167863,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3566618094004437093, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 639.2
+      value: 225
       objectReference: {fileID: 0}
     - target: {fileID: 3566618094004437093, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
       propertyPath: m_LocalPosition.y
@@ -167462,7 +167871,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3566618094004437093, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 469.135
+      value: 167
       objectReference: {fileID: 0}
     - target: {fileID: 3566618094004437093, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
       propertyPath: m_LocalRotation.w
@@ -167910,7 +168319,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7469277342696742021, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
       propertyPath: MaxHP
-      value: 700
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 7469277342696742021, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
       propertyPath: BossIcon
@@ -171200,6 +171609,11 @@ SceneRoots:
   - {fileID: 767966607}
   - {fileID: 372027764}
   - {fileID: 1049750733}
+  - {fileID: 1690667668}
+  - {fileID: 930825028}
+  - {fileID: 983017563}
+  - {fileID: 445056506}
+  - {fileID: 378208707}
   - {fileID: 1121329612}
   - {fileID: 1276493464}
   - {fileID: 1916417550}
