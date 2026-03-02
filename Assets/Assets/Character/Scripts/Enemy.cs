@@ -60,6 +60,12 @@ public class Enemy : MonoBehaviour
     private bool isDead = false; // true after Die() called to stop AI and interactions
     private EnemyAudioSystem audioSystem;
 
+    // damage stun: if enemy hurt, delay before next attack
+    [Header("Pain / Stun")]
+    [Tooltip("Seconds after taking damage during which the enemy cannot start a new attack")]
+    public float damageStunDuration = 2f;
+    private float lastDamageTime = -Mathf.Infinity;
+
     // AI variables
     private EnemyManager manager;
     protected Transform player;
@@ -151,7 +157,7 @@ public class Enemy : MonoBehaviour
     void Update()
     {
         if (isDead) return; // dead enemies do nothing
-        if (isKnockedBack || isAttacking) return;
+        if (isKnockedBack) return; // allow chasing/movement while attacking
 
         UpdateAI();
     }
@@ -167,14 +173,15 @@ public class Enemy : MonoBehaviour
         // AI Movement
         if (isDead) return; // safety: no movement after death
 
-        if (shouldMove && !isKnockedBack && !isAttacking)
+        if (shouldMove && !isKnockedBack)
         {
             MoveTowards(moveTarget);
         }
         if (animator != null)
         {
             // Always set the canonical 'IsMoving' bool when moving
-            bool movingValue = shouldMove && !isAttacking && !isKnockedBack;
+            // Allow movement flag even while attacking so enemies continue to close distance
+            bool movingValue = shouldMove && !isKnockedBack;
             animator.SetBool("IsMoving", movingValue);
 
             // Debug: if moving flag is true but animator not playing Walk state, try to force it
@@ -204,7 +211,6 @@ public class Enemy : MonoBehaviour
     {
         if (manager == null || player == null) return;
 
-        if (lastActionTime >= 0f && Time.time - lastActionTime < 3f) return; // Delay 3s after actions (not on spawn)
 
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
@@ -220,10 +226,20 @@ public class Enemy : MonoBehaviour
             case AIState.Chase:
                 if (distanceToPlayer <= attackRange)
                 {
+                    // prevent starting an attack if recently damaged
+                    if (Time.time - lastDamageTime < damageStunDuration)
+                    {
+                        // keep chasing but no attack
+                        moveTarget = player.position;
+                        shouldMove = true;
+                        if (showDebugInfo) Debug.Log($"{gameObject.name} hurt recently, delaying attack");
+                        break;
+                    }
+
                     if (manager.CanAttack(this))
                     {
                         StartAttack();
-                        lastActionTime = Time.time;
+                        // manager will handle attack cooldown
                         if (showDebugInfo) Debug.Log($"{gameObject.name} starting attack (distance {distanceToPlayer:F2})");
                     }
                     else
@@ -339,11 +355,13 @@ public class Enemy : MonoBehaviour
 
         ApplyAttackDamage();
 
-        // After attack, retreat
-        retreatPosition = transform.position + (transform.position - player.position).normalized * retreatDistance;
-        currentState = AIState.Retreat;
+        // After attack, continue chasing the player instead of retreating
+        currentState = AIState.Chase;
         isAttacking = false;
-        manager.EndAttack(this);
+        // Ensure AI keeps moving towards player
+        moveTarget = player.position;
+        shouldMove = true;
+        if (manager != null) manager.EndAttack(this);
     }
 
     /// <summary>
@@ -434,6 +452,23 @@ public class Enemy : MonoBehaviour
         if (manager != null) manager.EndAttack(this);
     }
 
+    /// <summary>
+    /// Helper for subclasses to finish an attack and immediately resume chasing the player.
+    /// Use this when you want the enemy to continue pursuing instead of retreating.
+    /// </summary>
+    protected void FinishAttackAndChase()
+    {
+        currentState = AIState.Chase;
+        isAttacking = false;
+        // Ensure AI keeps moving towards player
+        if (player != null)
+        {
+            moveTarget = player.position;
+            shouldMove = true;
+        }
+        if (manager != null) manager.EndAttack(this);
+    }
+
     // ✅ THÊM overload để nhận player forward direction
     public void TakeDamage(float damage, Vector3 attackerPosition, Vector3 attackerForward)
     {
@@ -450,8 +485,7 @@ public class Enemy : MonoBehaviour
         }
 
         // Trừ máu
-        currentHealth -= damage;
-
+        currentHealth -= damage;        lastDamageTime = Time.time;
         // Play damage sound (parallel with animation)
         if (audioSystem != null)
         {

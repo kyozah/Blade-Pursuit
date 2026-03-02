@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 public class menu : MonoBehaviour
 {
     [Tooltip("Name of the scene to load when Play is pressed.")]
-    public string gameSceneName = "Game";
+    public string gameSceneName = "Gameplay";
 
     /// <summary>
     /// Called by the Play button.  Loads the game scene.
@@ -23,6 +23,7 @@ public class menu : MonoBehaviour
         }
 
         Debug.Log("[menu] Loading scene: " + gameSceneName);
+        Time.timeScale = 1f; // Ensure time is running
         SceneManager.LoadScene(gameSceneName);
     }
 
@@ -32,6 +33,7 @@ public class menu : MonoBehaviour
     public void QuitGame()
     {
         Debug.Log("[menu] Quit requested.");
+        Time.timeScale = 1f; // Ensure time is running
         Application.Quit();
 
         // in the editor, Application.Quit() does nothing, so log to console

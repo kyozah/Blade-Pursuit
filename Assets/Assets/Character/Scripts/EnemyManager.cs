@@ -26,13 +26,14 @@ public class EnemyManager : MonoBehaviour
     public float spawnHeight = 0f;
 
     [Header("Attack Management")]
-    public float attackCooldown = 3f; // Delay giữa các attack
+    public float attackCooldown = 2f; // Delay giữa các attack (default 2s)
 
     [Header("Debug")]
     public bool showDebugInfo = false;
 
     private List<Enemy> enemies = new List<Enemy>();
     private bool playerInZone = false;
+    private bool hasSpawnedOnce = false; // ensure we only spawn enemies one time
     private Transform player;
     private float lastAttackTime = -Mathf.Infinity;
     private Enemy currentAttackingEnemy = null;
@@ -71,7 +72,11 @@ public class EnemyManager : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInZone = true;
-            SpawnEnemies();
+            if (!hasSpawnedOnce)
+            {
+                SpawnEnemies();
+                hasSpawnedOnce = true;
+            }
         }
     }
 
@@ -86,6 +91,7 @@ public class EnemyManager : MonoBehaviour
 
     void SpawnEnemies()
     {
+        if (hasSpawnedOnce) return; // guard in case called elsewhere
         // Remove destroyed/null entries before spawning
         enemies.RemoveAll(e => e == null);
 

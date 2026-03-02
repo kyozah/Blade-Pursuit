@@ -69,7 +69,7 @@ public class Tank : Enemy
             yield return new WaitForSeconds(remaining);
         }
 
-        // After attack, transition to retreat using protected helper
-        FinishAttackAndRetreat();
+        // After attack, transition back to chasing the player (do not retreat)
+        FinishAttackAndChase();
     }
 }

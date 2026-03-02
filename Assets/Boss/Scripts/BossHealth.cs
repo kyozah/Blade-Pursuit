@@ -3,6 +3,9 @@ using System;
 
 public class BossHealth : MonoBehaviour
 {
+    // (previously used static counter for boss tracking; now handled by VictoryMenuUI)
+    // public static int activeBosses = 0; // no longer needed
+
     public string BossName = "Boss";
     public Sprite BossIcon;
 
@@ -26,6 +29,9 @@ public class BossHealth : MonoBehaviour
         CurrentHP = MaxHP;
         OnHealthChanged?.Invoke(CurrentHP, MaxHP);
 
+        // register boss count (no longer used)
+        //activeBosses++;
+
         // Ẩn rương ngay từ đầu
         if (rewardChest != null)
             rewardChest.SetActive(false);
@@ -41,6 +47,10 @@ public class BossHealth : MonoBehaviour
         {
             OnDied?.Invoke();
             GetComponentInParent<BossBrain>().OnDie();
+
+            // previously we used a static counter to notify GameManager when all bosses died.
+            // That logic has been removed in favor of VictoryMenuUI tracking an explicit list of bosses.
+            // If you still need to notify GameManager here, you can call it directly from VictoryMenuUI.
 
             if (rewardChest != null)
                 StartCoroutine(RevealChest());

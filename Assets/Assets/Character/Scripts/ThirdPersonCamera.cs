@@ -86,18 +86,19 @@ public class ThirdPersonCamera : MonoBehaviour
         currentPitch -= mouseY;
         currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
 
-        // ESC để mở cursor
+        // ESC toggles cursor lock/visibility (only ESC controls lock state)
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-
-        // Click để khóa lại
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
     }
 

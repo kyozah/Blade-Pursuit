@@ -338,6 +338,22 @@ public class PlayerHealth : MonoBehaviour
         return currentHealth / maxHealth;
     }
 
+    /// <summary>
+    /// Increase the player's maximum health by <paramref name="amount"/>.
+    /// If <paramref name="healToFull"/> is true, also set current health to the new max.
+    /// </summary>
+    public void IncreaseMaxHealth(float amount, bool healToFull = false)
+    {
+        if (amount <= 0) return;
+        maxHealth += amount;
+        Debug.Log($"🔼 Player max health increased by {amount}. New max: {maxHealth}");
+        if (healToFull)
+        {
+            currentHealth = maxHealth;
+            Debug.Log($"✨ Player healed to full: {currentHealth}/{maxHealth}");
+        }
+    }
+
     public bool IsDead()
     {
         return isDead;
