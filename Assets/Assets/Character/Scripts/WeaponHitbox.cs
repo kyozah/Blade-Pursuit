@@ -10,43 +10,40 @@ public class WeaponHitbox : MonoBehaviour
     public float knockbackUpwardForce = 2f;
 
     [Header("Hit Detection")]
-    [Tooltip("Delay trước khi hitbox active")]
     public float activationDelay = 0.05f;
-
-    [Tooltip("Đẩy enemies đang overlap trước khi enable")]
-    public bool pushOverlappingEnemies = true;
-
-    [Tooltip("Lực đẩy enemies overlap")]
-    public float pushForce = 15f;
-
-    [Header("Tags")]
-    [Tooltip("Tag của enemy thường")]
     public string enemyTag = "Enemy";
-
-    [Tooltip("Tag của boss")]
     public string bossTag = "Boss";
 
     private bool canDealDamage = false;
     private List<Collider> hitEnemies = new List<Collider>();
     private Coroutine enableCoroutine;
+    private BoxCollider boxCollider;
 
     void Start()
     {
+        boxCollider = GetComponent<BoxCollider>();
         Debug.Log($"⚔️ WeaponHitbox initialized: Damage={damage}, Knockback={knockbackForce}");
     }
 
-    void OnTriggerEnter(Collider other)
+    void Update()
     {
-        if (!canDealDamage) return;
-        if (hitEnemies.Contains(other)) return;
+        if (!canDealDamage || boxCollider == null) return;
 
-        if (other.CompareTag(enemyTag))
+        // ✅ Scan mỗi frame — không phụ thuộc OnTriggerEnter
+        Collider[] hits = Physics.OverlapBox(
+            boxCollider.bounds.center,
+            boxCollider.bounds.extents,
+            transform.rotation
+        );
+
+        foreach (Collider col in hits)
         {
-            DealDamageToEnemy(other);
-        }
-        else if (other.CompareTag(bossTag))
-        {
-            DealDamageToBoss(other);
+            if (hitEnemies.Contains(col)) continue;
+
+            if (col.CompareTag(enemyTag))
+                DealDamageToEnemy(col);
+            else if (col.CompareTag(bossTag))
+                DealDamageToBoss(col);
         }
     }
 
@@ -58,21 +55,19 @@ public class WeaponHitbox : MonoBehaviour
 
         if (enemy != null)
         {
-            Vector3 playerForward = transform.root.forward;
-            enemy.TakeDamage(damage, transform.root.position, playerForward);
+            enemy.TakeDamage(damage, transform.root.position, transform.root.forward);
             OverrideEnemyKnockback(enemy);
             hitEnemies.Add(enemyCollider);
-            Debug.Log($"✅ Dealt {damage} damage to Enemy: {enemyCollider.gameObject.name}");
+            Debug.Log($"✅ Dealt {damage} damage to Enemy: {enemyCollider.name}");
         }
         else
         {
-            Debug.LogError($"❌ No Enemy component on {enemyCollider.gameObject.name}!");
+            Debug.LogError($"❌ No Enemy component on {enemyCollider.name}!");
         }
     }
 
     void DealDamageToBoss(Collider bossCollider)
     {
-        // Tìm BossHealth trên chính object hoặc parent
         BossHealth bossHealth = bossCollider.GetComponent<BossHealth>();
         if (bossHealth == null)
             bossHealth = bossCollider.GetComponentInParent<BossHealth>();
@@ -81,11 +76,11 @@ public class WeaponHitbox : MonoBehaviour
         {
             bossHealth.TakeDamage(damage);
             hitEnemies.Add(bossCollider);
-            Debug.Log($"✅ Dealt {damage} damage to Boss: {bossCollider.gameObject.name}");
+            Debug.Log($"✅ Dealt {damage} damage to Boss: {bossCollider.name}");
         }
         else
         {
-            Debug.LogError($"❌ No BossHealth component on {bossCollider.gameObject.name}!");
+            Debug.LogError($"❌ No BossHealth on {bossCollider.name}!");
         }
     }
 
@@ -107,109 +102,11 @@ public class WeaponHitbox : MonoBehaviour
 
     IEnumerator EnableDamageDelayed()
     {
-        if (pushOverlappingEnemies)
-            PushOverlappingEnemies();
-
         if (activationDelay > 0)
             yield return new WaitForSeconds(activationDelay);
 
         canDealDamage = true;
         Debug.Log($"🗡️ Weapon damage ENABLED - Damage: {damage}");
-
-        CheckForTargetsInHitbox();
-    }
-
-    void CheckForTargetsInHitbox()
-    {
-        Collider hitboxCollider = GetComponent<Collider>();
-        if (hitboxCollider == null) return;
-
-        Collider[] overlapping = Physics.OverlapBox(
-            hitboxCollider.bounds.center,
-            hitboxCollider.bounds.extents,
-            transform.rotation
-        );
-
-        // Find closest target to avoid hitting multiple bosses at the same time
-        Collider closestTarget = null;
-        float closestDistance = float.MaxValue;
-        Vector3 weaponPos = transform.position;
-
-        foreach (Collider col in overlapping)
-        {
-            if (hitEnemies.Contains(col)) continue;
-
-            if (col.CompareTag(enemyTag) || col.CompareTag(bossTag))
-            {
-                float distance = Vector3.Distance(weaponPos, col.transform.position);
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestTarget = col;
-                }
-            }
-        }
-
-        // Only hit the closest target
-        if (closestTarget != null)
-        {
-            if (closestTarget.CompareTag(enemyTag))
-                DealDamageToEnemy(closestTarget);
-            else if (closestTarget.CompareTag(bossTag))
-                DealDamageToBoss(closestTarget);
-        }
-    }
-
-    void PushOverlappingEnemies()
-    {
-        Collider hitboxCollider = GetComponent<Collider>();
-        if (hitboxCollider == null) return;
-
-        Collider[] overlapping = Physics.OverlapBox(
-            hitboxCollider.bounds.center,
-            hitboxCollider.bounds.extents,
-            transform.rotation
-        );
-
-        // Only push the closest target
-        Collider closestTarget = null;
-        float closestDistance = float.MaxValue;
-        Vector3 weaponPos = transform.position;
-
-        foreach (Collider col in overlapping)
-        {
-            if (col.CompareTag(enemyTag) || col.CompareTag(bossTag))
-            {
-                float distance = Vector3.Distance(weaponPos, col.transform.position);
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestTarget = col;
-                }
-            }
-        }
-
-        if (closestTarget != null)
-        {
-            Rigidbody targetRb = closestTarget.GetComponent<Rigidbody>();
-            if (targetRb == null)
-                targetRb = closestTarget.GetComponentInParent<Rigidbody>();
-
-            if (targetRb != null)
-            {
-                Vector3 pushDirection = transform.root.forward;
-                pushDirection.y = 0;
-                pushDirection.Normalize();
-
-                Vector3 pushVelocity = pushDirection * pushForce;
-                pushVelocity.y = 1f;
-
-                targetRb.WakeUp();
-                targetRb.linearVelocity = pushVelocity;
-
-                Debug.Log($"⚡ Pushed closest target: {closestTarget.gameObject.name}");
-            }
-        }
     }
 
     public void DisableDamage()
