@@ -17,6 +17,9 @@ public class LobbyUI : MonoBehaviour
     public TMP_InputField joinRoomInput;
     public Button joinRoomButton;
 
+    [Header("Bắt đầu game (chỉ Host thấy)")]
+    public Button startGameButton;   // ✅ Tạo thêm Button này trong Unity UI
+
     [Header("Danh sách phòng")]
     public Transform roomListContainer;
     public RoomListItem roomListItemPrefab;
@@ -25,10 +28,21 @@ public class LobbyUI : MonoBehaviour
 
     void Start()
     {
+        networkManager.JoinLobby();
+
+        if (startGameButton != null)
+            startGameButton.gameObject.SetActive(false); // ẩn mặc định
+
         createRoomButton.onClick.AddListener(() =>
         {
             var name = createRoomInput.text.Trim();
-            if (!string.IsNullOrEmpty(name)) networkManager.CreateRoom(name);
+            if (!string.IsNullOrEmpty(name))
+            {
+                networkManager.CreateRoom(name);
+                // Hiện nút Start cho Host sau khi tạo phòng
+                if (startGameButton != null)
+                    startGameButton.gameObject.SetActive(true);
+            }
         });
 
         joinRoomButton.onClick.AddListener(() =>
@@ -36,6 +50,9 @@ public class LobbyUI : MonoBehaviour
             var name = joinRoomInput.text.Trim();
             if (!string.IsNullOrEmpty(name)) networkManager.JoinRoom(name);
         });
+
+        if (startGameButton != null)
+            startGameButton.onClick.AddListener(() => networkManager.StartGame());
     }
 
     public void BuildRoomList(List<SessionInfo> sessions)

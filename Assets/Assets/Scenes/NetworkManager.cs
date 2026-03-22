@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
@@ -16,41 +15,73 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     void Awake()
     {
-        _runner = gameObject.AddComponent<NetworkRunner>();
+        // Chỉ tạo 1 lần, không bao giờ destroy
+        if (FindObjectsByType<NetworkManager>(FindObjectsSortMode.None).Length > 1)
+        {
+            Destroy(gameObject);
+            return;
+        }
         DontDestroyOnLoad(gameObject);
+        _runner = gameObject.AddComponent<NetworkRunner>();
+        _runner.ProvideInput = true;
+        _runner.AddCallbacks(this);
     }
 
     // ── Lobby ──────────────────────────────────────────────
     public async void JoinLobby()
     {
-        _runner.ProvideInput = true;
-        _runner.AddCallbacks(this);
-        var res = await _runner.JoinSessionLobby(SessionLobby.ClientServer);
-        if (!res.Ok) Debug.LogError("Không vào được lobby: " + res.ShutdownReason);
+        Debug.Log("[NET] Đang kết nối lobby...");
+        var res = await _runner.JoinSessionLobby(SessionLobby.Custom, "MainLobby");
+        if (!res.Ok) Debug.LogError("[NET] Không vào được lobby: " + res.ShutdownReason);
+        else Debug.Log("[NET] Vào lobby thành công!");
     }
 
     // ── Tạo phòng ──────────────────────────────────────────
     public async void CreateRoom(string roomName)
     {
+        Debug.Log("[NET] Tạo phòng: " + roomName);
+        var sceneManager = gameObject.GetComponent<NetworkSceneManagerDefault>()
+                        ?? gameObject.AddComponent<NetworkSceneManagerDefault>();
+
         var res = await _runner.StartGame(new StartGameArgs
         {
             GameMode = GameMode.Host,
             SessionName = roomName,
-            Scene = SceneRef.FromIndex(1),
-            SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
+            SceneManager = sceneManager,
+            IsVisible = true,
+            IsOpen = true,
+            CustomLobbyName = "MainLobby",
         });
-        if (!res.Ok) Debug.LogError("Không tạo được phòng: " + res.ShutdownReason);
+        if (!res.Ok) Debug.LogError("[NET] Không tạo được phòng: " + res.ShutdownReason);
+        else Debug.Log("[NET] Tạo phòng thành công: " + roomName);
+    }
+
+    // ── Bắt đầu game ──────────────────────────────────────
+    public void StartGame()
+    {
+        if (_runner != null && _runner.IsServer)
+        {
+            Debug.Log("[NET] Host load scene Gameplay...");
+            _runner.LoadScene(SceneRef.FromIndex(1));
+        }
     }
 
     // ── Vào phòng ──────────────────────────────────────────
     public async void JoinRoom(string roomName)
     {
+        Debug.Log("[NET] Đang vào phòng: " + roomName);
+        var sceneManager = gameObject.GetComponent<NetworkSceneManagerDefault>()
+                        ?? gameObject.AddComponent<NetworkSceneManagerDefault>();
+
         var res = await _runner.StartGame(new StartGameArgs
         {
             GameMode = GameMode.Client,
             SessionName = roomName,
+            SceneManager = sceneManager,
+            CustomLobbyName = "MainLobby",
         });
-        if (!res.Ok) Debug.LogError("Không vào được phòng: " + res.ShutdownReason);
+        if (!res.Ok) Debug.LogError("[NET] Không vào được phòng: " + res.ShutdownReason);
+        else Debug.Log("[NET] Vào phòng thành công!");
     }
 
     // ── Spawn / Despawn ────────────────────────────────────
@@ -87,21 +118,24 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
     {
+        Debug.Log("[NET] OnSessionListUpdated: " + sessionList.Count + " phòng");
+        foreach (var s in sessionList) Debug.Log("[NET] Phòng: " + s.Name);
         lobbyUI?.BuildRoomList(sessionList);
     }
 
-    // ── Bỏ trống các callback không cần ───────────────────
+    // ── Callbacks ──────────────────────────────────────────
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
-    public void OnShutdown(NetworkRunner runner, ShutdownReason reason) { }
+    public void OnShutdown(NetworkRunner runner, ShutdownReason reason) { Debug.Log("[NET] Shutdown: " + reason); }
     public void OnConnectedToServer(NetworkRunner runner) { }
+    public void OnConnectedToServer(NetworkRunner runner, NetAddress remoteAddress) { }
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
     public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
     public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
     public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
-    public void OnSceneLoadDone(NetworkRunner runner) { }
-    public void OnSceneLoadStart(NetworkRunner runner) { }
+    public void OnSceneLoadDone(NetworkRunner runner) { Debug.Log("[NET] Scene load xong!"); }
+    public void OnSceneLoadStart(NetworkRunner runner) { Debug.Log("[NET] Đang load scene..."); }
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
