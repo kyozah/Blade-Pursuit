@@ -55,6 +55,9 @@ public class LobbyUI : MonoBehaviour
             startGameButton.onClick.AddListener(() => networkManager.StartGame());
     }
 
+    [Header("Disconnected Message")]
+    public TMP_Text disconnectedText; // Assign a TextMeshPro text in the UI
+
     public void BuildRoomList(List<SessionInfo> sessions)
     {
         foreach (var item in _items) Destroy(item.gameObject);
@@ -66,5 +69,15 @@ public class LobbyUI : MonoBehaviour
             item.Init(s.Name, () => networkManager.JoinRoom(s.Name));
             _items.Add(item);
         }
+    }
+
+    public void ShowDisconnectedMessage(string reason)
+    {
+        if (disconnectedText != null)
+        {
+            disconnectedText.text = $"Disconnected: {reason}";
+            disconnectedText.gameObject.SetActive(true);
+        }
+        Debug.Log($"[UI] Disconnected: {reason}");
     }
 }
