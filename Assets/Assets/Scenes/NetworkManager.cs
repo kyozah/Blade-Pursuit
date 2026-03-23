@@ -52,48 +52,56 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     }
 
     // ── Bắt đầu game (Host gọi khi muốn start) ────────────
-    // 1. Sửa lại hàm StartGame để chắc chắn dùng đúng API của Fusion
+    // ── Bắt đầu game (Host gọi khi nhấn nút) ────────────
     public void StartGame()
     {
+        // Kiểm tra IsServer vì chỉ Host mới có quyền đổi Scene cho cả phòng
         if (_runner != null && _runner.IsServer)
         {
             Debug.Log("[NET] Host yêu cầu tất cả chuyển sang scene Gameplay...");
-            // Sử dụng LoadScene của Runner để đồng bộ tất cả Client
+            
+            // QUAN TRỌNG: Đảm bảo Scene Gameplay ở Index 1 trong Build Settings
             _runner.LoadScene(SceneRef.FromIndex(1)); 
         }
     }
 
-    // 2. Xóa hoặc Comment logic Spawn trong OnPlayerJoined
+    // ── Player Joined (Lúc này vẫn đang ở Lobby) ────────
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        // Không Spawn ở đây nếu bạn muốn đợi vào Game mới Spawn
-        Debug.Log($"[NET] Player {player} đã vào Session.");
-        if (!runner.IsServer) return;
-        var pos = new Vector3(UnityEngine.Random.Range(-4f, 4f), 0, UnityEngine.Random.Range(-4f, 4f));
-        var obj = runner.Spawn(playerPrefab, pos, Quaternion.identity, player);
-        _spawnedPlayers[player] = obj;
+        // KHÔNG SPAWN Ở ĐÂY. 
+        // Nếu spawn ở đây, nhân vật sẽ xuất hiện ở Scene Lobby (Index 0).
+        Debug.Log($"[NET] Player {player} đã vào phòng chờ.");
     }
 
-    // 3. Spawn Player tại OnSceneLoadDone
+    // ── Khi Scene Gameplay đã load xong trên máy ─────────
     public void OnSceneLoadDone(NetworkRunner runner)
     {
-        Debug.Log("[NET] Scene load xong! Bắt đầu Spawn người chơi...");
-        
-        if (runner.IsServer) // Chỉ Host/Server mới có quyền Spawn
+        // Fix lỗi gạch đỏ: runner.CurrentScene không tồn tại trực tiếp trong một số bản Fusion
+        Debug.Log("[NET] Một Scene mới đã được load xong trên máy này!");
+
+        // Chỉ Host/Server mới có quyền thực hiện lệnh Spawn để đồng bộ cho tất cả
+        if (runner.IsServer) 
         {
+            // runner.ActivePlayers chứa danh sách tất cả người chơi đã kết nối thành công
             foreach (var player in runner.ActivePlayers)
             {
-                // Kiểm tra tránh spawn trùng nếu scene load lại
+                // Kiểm tra tránh spawn trùng nếu scene load lại hoặc có người vào sau
                 if (!_spawnedPlayers.ContainsKey(player))
                 {
-                    var pos = new Vector3(UnityEngine.Random.Range(-4f, 4f), 1, UnityEngine.Random.Range(-4f, 4f));
-                    var obj = runner.Spawn(playerPrefab, pos, Quaternion.identity, player);
-                    _spawnedPlayers.Add(player, obj);
+                    Debug.Log($"[NET] Đang Spawn nhân vật cho Player: {player}");
+                    
+                    // Đặt Y = 1 để nhân vật rơi nhẹ xuống sàn, tránh bị kẹt (glitch) dưới đất
+                    Vector3 spawnPos = new Vector3(UnityEngine.Random.Range(-4f, 4f), 1f, UnityEngine.Random.Range(-4f, 4f));
+                    
+                    // Spawn prefab và gán quyền điều khiển (Input Authority) cho đúng người chơi
+                    NetworkObject playerObject = runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
+                    
+                    // Lưu vào Dictionary để quản lý (ví dụ: để xóa khi họ thoát)
+                    _spawnedPlayers.Add(player, playerObject);
                 }
             }
         }
     }
-
     // ── Vào phòng ──────────────────────────────────────────
     public async void JoinRoom(string roomName)
     {
