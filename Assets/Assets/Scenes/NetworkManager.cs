@@ -158,13 +158,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public void OnShutdown(NetworkRunner runner, ShutdownReason reason) { Debug.Log("[NET] Shutdown: " + reason); }
     public void OnConnectedToServer(NetworkRunner runner) { }
     public void OnConnectedToServer(NetworkRunner runner, NetAddress remoteAddress) { }
-    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) 
-    { 
-        Debug.LogError($"[NET] Disconnected from server. Reason: {reason}");
-        // Handle disconnection: e.g., show UI, attempt reconnect, etc.
-        // For example, return to lobby or main menu
-        lobbyUI?.ShowDisconnectedMessage(reason.ToString());
-    }
+    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
     public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
     public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
