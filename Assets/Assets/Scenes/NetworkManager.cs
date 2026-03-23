@@ -15,10 +15,34 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     void Awake()
     {
+        // Nếu đã có NetworkManager khác (từ lần play trước), xóa cái mới
+        var existing = FindObjectsByType<NetworkManager>(FindObjectsSortMode.None);
+        if (existing.Length > 1)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        DontDestroyOnLoad(gameObject);
+
+        // Xóa runner cũ còn sót
+        foreach (var r in gameObject.GetComponents<NetworkRunner>())
+            Destroy(r);
+
         _runner = gameObject.AddComponent<NetworkRunner>();
         _runner.ProvideInput = true;
         _runner.AddCallbacks(this);
-        DontDestroyOnLoad(gameObject);
+    }
+
+    async void OnApplicationQuit()
+    {
+        if (_runner != null) await _runner.Shutdown();
+    }
+
+    async void OnDisable()
+    {
+        if (_runner != null && _runner.IsRunning)
+            await _runner.Shutdown();
     }
 
     // ── Lobby ──────────────────────────────────────────────
