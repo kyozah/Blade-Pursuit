@@ -52,12 +52,45 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     }
 
     // ── Bắt đầu game (Host gọi khi muốn start) ────────────
+    // 1. Sửa lại hàm StartGame để chắc chắn dùng đúng API của Fusion
     public void StartGame()
     {
         if (_runner != null && _runner.IsServer)
         {
-            Debug.Log("[NET] Host load scene Gameplay...");
-            _runner.LoadScene(SceneRef.FromIndex(1));
+            Debug.Log("[NET] Host yêu cầu tất cả chuyển sang scene Gameplay...");
+            // Sử dụng LoadScene của Runner để đồng bộ tất cả Client
+            _runner.LoadScene(SceneRef.FromIndex(1)); 
+        }
+    }
+
+    // 2. Xóa hoặc Comment logic Spawn trong OnPlayerJoined
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
+    {
+        // Không Spawn ở đây nếu bạn muốn đợi vào Game mới Spawn
+        Debug.Log($"[NET] Player {player} đã vào Session.");
+        if (!runner.IsServer) return;
+        var pos = new Vector3(UnityEngine.Random.Range(-4f, 4f), 0, UnityEngine.Random.Range(-4f, 4f));
+        var obj = runner.Spawn(playerPrefab, pos, Quaternion.identity, player);
+        _spawnedPlayers[player] = obj;
+    }
+
+    // 3. Spawn Player tại OnSceneLoadDone
+    public void OnSceneLoadDone(NetworkRunner runner)
+    {
+        Debug.Log("[NET] Scene load xong! Bắt đầu Spawn người chơi...");
+        
+        if (runner.IsServer) // Chỉ Host/Server mới có quyền Spawn
+        {
+            foreach (var player in runner.ActivePlayers)
+            {
+                // Kiểm tra tránh spawn trùng nếu scene load lại
+                if (!_spawnedPlayers.ContainsKey(player))
+                {
+                    var pos = new Vector3(UnityEngine.Random.Range(-4f, 4f), 1, UnityEngine.Random.Range(-4f, 4f));
+                    var obj = runner.Spawn(playerPrefab, pos, Quaternion.identity, player);
+                    _spawnedPlayers.Add(player, obj);
+                }
+            }
         }
     }
 
@@ -80,13 +113,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     }
 
     // ── Spawn / Despawn ────────────────────────────────────
-    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
-    {
-        if (!runner.IsServer) return;
-        var pos = new Vector3(UnityEngine.Random.Range(-4f, 4f), 0, UnityEngine.Random.Range(-4f, 4f));
-        var obj = runner.Spawn(playerPrefab, pos, Quaternion.identity, player);
-        _spawnedPlayers[player] = obj;
-    }
+    
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
@@ -129,7 +156,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
     public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
-    public void OnSceneLoadDone(NetworkRunner runner) { Debug.Log("[NET] Scene load xong!"); }
+    
     public void OnSceneLoadStart(NetworkRunner runner) { Debug.Log("[NET] Đang load scene..."); }
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
