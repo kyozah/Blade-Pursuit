@@ -15,16 +15,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     void Awake()
     {
-        // Chỉ tạo 1 lần, không bao giờ destroy
-        if (FindObjectsByType<NetworkManager>(FindObjectsSortMode.None).Length > 1)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        DontDestroyOnLoad(gameObject);
         _runner = gameObject.AddComponent<NetworkRunner>();
         _runner.ProvideInput = true;
         _runner.AddCallbacks(this);
+        DontDestroyOnLoad(gameObject);
     }
 
     // ── Lobby ──────────────────────────────────────────────
@@ -39,7 +33,6 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     // ── Tạo phòng ──────────────────────────────────────────
     public async void CreateRoom(string roomName)
     {
-        Debug.Log("[NET] Tạo phòng: " + roomName);
         var sceneManager = gameObject.GetComponent<NetworkSceneManagerDefault>()
                         ?? gameObject.AddComponent<NetworkSceneManagerDefault>();
 
@@ -51,12 +44,14 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             IsVisible = true,
             IsOpen = true,
             CustomLobbyName = "MainLobby",
+            // Không load scene ở đây — giữ Host trong lobby
+            // Scene sẽ được load khi nhấn nút "Bắt đầu"
         });
         if (!res.Ok) Debug.LogError("[NET] Không tạo được phòng: " + res.ShutdownReason);
         else Debug.Log("[NET] Tạo phòng thành công: " + roomName);
     }
 
-    // ── Bắt đầu game ──────────────────────────────────────
+    // ── Bắt đầu game (Host gọi khi muốn start) ────────────
     public void StartGame()
     {
         if (_runner != null && _runner.IsServer)
