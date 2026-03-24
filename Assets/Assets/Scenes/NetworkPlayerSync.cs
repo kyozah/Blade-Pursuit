@@ -1,53 +1,85 @@
 using Fusion;
 using UnityEngine;
 
-// Gán script này vào PlayerPrefab cùng với ThirdPersonController
-// NetworkObject phải có trên PlayerPrefab
 public class NetworkPlayerSync : NetworkBehaviour
 {
     private ThirdPersonController _controller;
-    private ThirdPersonCamera _camera;
+    private PlayerHealth _health;
+    private AttackComboController _attack;
+    private RollController _roll;
 
-    [Networked] private NetworkButtons PrevButtons { get; set; }
-    [Networked] public Vector2 NetworkedMoveInput { get; set; }
-    [Networked] public NetworkBool NetworkedSprint { get; set; }
+    // ✅ Reference đến LobbyUI để ẩn khi nhận RPC
+    private LobbyUI _lobbyUI;
+
+    void Awake()
+    {
+        _controller = GetComponent<ThirdPersonController>();
+        // Set trước khi Start() của ThirdPersonController chạy
+        if (_controller != null)
+            _controller.isNetworkControlled = true;
+    }
 
     public override void Spawned()
     {
         _controller = GetComponent<ThirdPersonController>();
+        _health     = GetComponent<PlayerHealth>();
+        _attack     = GetComponent<AttackComboController>();
+        _roll       = GetComponent<RollController>();
+        _lobbyUI    = FindFirstObjectByType<LobbyUI>();
 
         if (HasInputAuthority)
         {
-            // Chỉ máy sở hữu nhân vật này mới cần camera
-            _camera = FindFirstObjectByType<ThirdPersonCamera>();
-            if (_camera != null)
-                _controller.cameraController = _camera;
-
-            // Bật Input System chỉ cho máy sở hữu
+            _controller.isNetworkControlled = true;
             _controller.enabled = true;
+            _controller.EnableInput();
+
+            if (_attack != null) _attack.enabled = true;
+            if (_roll   != null) _roll.enabled   = true;
+
+            var camera = FindFirstObjectByType<ThirdPersonCamera>();
+            if (camera != null)
+                camera.SetTarget(transform);
+            else
+                Debug.LogWarning("[NET] Không tìm thấy ThirdPersonCamera!");
+
+            var healthBar = FindFirstObjectByType<PlayerHealthBar>();
+            if (healthBar != null)
+                healthBar.SetTarget(_health);
+
+            Debug.Log("[NET] Local player spawned: " + gameObject.name);
         }
         else
         {
-            // Máy khác: tắt ThirdPersonController, để NetworkPlayerSync điều khiển
+            _controller.isNetworkControlled = true;
             _controller.enabled = false;
+            _controller.DisableInput();
+
+            if (_attack != null) _attack.enabled = false;
+            if (_roll   != null) _roll.enabled   = false;
+
+            Debug.Log("[NET] Remote player spawned: " + gameObject.name);
         }
     }
 
     public override void FixedUpdateNetwork()
     {
+        if (!HasInputAuthority) return;
+        if (_controller == null || !_controller.enabled) return;
+
         if (GetInput(out NetworkInputData input))
         {
-            // Truyền input từ Fusion vào ThirdPersonController
+            // ✅ Chỉ set input — ThirdPersonController.Update() sẽ không đọc input riêng
             _controller.SetNetworkInput(input.move, input.sprint);
         }
     }
 
-    public override void Render()
+    // ✅ Host gọi để ẩn lobby trên tất cả client
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RpcHideLobbyOnClients()
     {
-        // Sync vị trí/rotation cho các máy khác (interpolation)
-        if (!HasInputAuthority)
-        {
-            // Fusion tự sync transform nếu có NetworkTransform component
-        }
+        Debug.Log("[NET] RPC HideLobby nhận được!");
+        if (_lobbyUI == null)
+            _lobbyUI = FindFirstObjectByType<LobbyUI>();
+        _lobbyUI?.HideLobby();
     }
 }

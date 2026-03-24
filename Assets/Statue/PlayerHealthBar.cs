@@ -14,45 +14,46 @@ public class PlayerHealthBar : MonoBehaviour
     [Header("Smooth Settings")]
     public float smoothSpeed = 5f;
 
-    private float targetFill;
-
     void Start()
     {
-        if (playerHealth == null)
-            playerHealth = FindFirstObjectByType<PlayerHealth>();
+        // Nếu không gán thủ công thì KHÔNG tự FindFirstObjectByType
+        // vì multiplayer có nhiều PlayerHealth — sẽ nhầm player
+        if (playerHealth != null)
+            UpdateUI(true);
+    }
 
+    // ✅ NetworkPlayerSync gọi để gán đúng player
+    public void SetTarget(PlayerHealth target)
+    {
+        playerHealth = target;
         UpdateUI(true);
     }
 
     void Update()
     {
         if (playerHealth == null || healthBarFill == null) return;
-
         UpdateUI(false);
     }
 
     void UpdateUI(bool instant)
     {
-        float current = playerHealth.GetCurrentHealth();
-        float max = playerHealth.GetMaxHealth();
+        if (playerHealth == null) return;
 
-        targetFill = playerHealth.GetHealthPercentage();
+        float targetFill = playerHealth.GetHealthPercentage();
 
         if (instant)
-        {
             healthBarFill.fillAmount = targetFill;
-        }
         else
-        {
             healthBarFill.fillAmount = Mathf.Lerp(
                 healthBarFill.fillAmount,
                 targetFill,
                 smoothSpeed * Time.deltaTime
             );
-        }
 
         if (healthText != null)
         {
+            float current = playerHealth.GetCurrentHealth();
+            float max     = playerHealth.GetMaxHealth();
             healthText.text = $"{Mathf.RoundToInt(current)} / {Mathf.RoundToInt(max)}";
         }
     }

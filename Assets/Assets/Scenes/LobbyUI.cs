@@ -10,7 +10,7 @@ public class LobbyUI : MonoBehaviour
     public NetworkManager networkManager;
 
     [Header("Panel Lobby (ẩn khi vào game)")]
-    public GameObject lobbyPanel;   // Gán toàn bộ Canvas/Panel lobby vào đây
+    public GameObject lobbyPanel;
 
     [Header("Tạo phòng")]
     public TMP_InputField createRoomInput;
@@ -31,7 +31,18 @@ public class LobbyUI : MonoBehaviour
 
     void Start()
     {
-        networkManager.JoinLobby();
+        // ── Kiểm tra references ───────────────────────────
+        if (networkManager == null)
+        {
+            Debug.LogError("[LobbyUI] networkManager chưa được gán trong Inspector!");
+            networkManager = FindFirstObjectByType<NetworkManager>();
+            if (networkManager == null)
+            {
+                Debug.LogError("[LobbyUI] Không tìm thấy NetworkManager trong scene!");
+                return;
+            }
+            Debug.Log("[LobbyUI] Tìm thấy NetworkManager tự động.");
+        }
 
         if (startGameButton != null)
             startGameButton.gameObject.SetActive(false);
@@ -50,21 +61,26 @@ public class LobbyUI : MonoBehaviour
         joinRoomButton.onClick.AddListener(() =>
         {
             var name = joinRoomInput.text.Trim();
-            if (!string.IsNullOrEmpty(name)) networkManager.JoinRoom(name);
+            if (!string.IsNullOrEmpty(name))
+            {
+                HideLobby();
+                networkManager.JoinRoom(name);
+            }
         });
 
         if (startGameButton != null)
             startGameButton.onClick.AddListener(() => networkManager.StartGame());
+
+        Debug.Log("[LobbyUI] Start() xong, gọi JoinLobby...");
+        networkManager.JoinLobby();
     }
 
-    // Gọi khi bắt đầu game — ẩn lobby UI đi
     public void HideLobby()
     {
         if (lobbyPanel != null)
             lobbyPanel.SetActive(false);
     }
 
-    // Gọi khi muốn quay về lobby
     public void ShowLobby()
     {
         if (lobbyPanel != null)
@@ -79,7 +95,11 @@ public class LobbyUI : MonoBehaviour
         foreach (var s in sessions)
         {
             var item = Instantiate(roomListItemPrefab, roomListContainer);
-            item.Init(s.Name, () => networkManager.JoinRoom(s.Name));
+            item.Init(s.Name, () =>
+            {
+                HideLobby();
+                networkManager.JoinRoom(s.Name);
+            });
             _items.Add(item);
         }
     }

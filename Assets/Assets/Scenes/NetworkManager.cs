@@ -21,7 +21,6 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         DontDestroyOnLoad(gameObject);
     }
 
-    // ── Lobby ──────────────────────────────────────────────
     public async void JoinLobby()
     {
         Debug.Log("[NET] Đang kết nối lobby...");
@@ -30,7 +29,6 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         else Debug.Log("[NET] Vào lobby thành công!");
     }
 
-    // ── Tạo phòng ──────────────────────────────────────────
     public async void CreateRoom(string roomName)
     {
         var sceneManager = gameObject.GetComponent<NetworkSceneManagerDefault>()
@@ -38,32 +36,38 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         var res = await _runner.StartGame(new StartGameArgs
         {
-            GameMode = GameMode.Host,
-            SessionName = roomName,
-            SceneManager = sceneManager,
-            IsVisible = true,
-            IsOpen = true,
+            GameMode        = GameMode.Host,
+            SessionName     = roomName,
+            SceneManager    = sceneManager,
+            IsVisible       = true,
+            IsOpen          = true,
             CustomLobbyName = "MainLobby",
         });
         if (!res.Ok) Debug.LogError("[NET] Không tạo được phòng: " + res.ShutdownReason);
         else Debug.Log("[NET] Tạo phòng thành công: " + roomName);
     }
 
-    // ── Bắt đầu game (Host gọi) ───────────────────────────
+    // ── Bắt đầu game ──────────────────────────────────────
     public void StartGame()
     {
         if (_runner != null && _runner.IsServer)
         {
             Debug.Log("[NET] Bắt đầu game!");
-            // Ẩn lobby Host trước
+            // ✅ Ẩn lobby ngay lập tức cho Host (không cần RPC)
             lobbyUI?.HideLobby();
-            // Ra lệnh ẩn lobby cho tất cả Client qua RPC
-            if (GameController.Instance != null)
-                GameController.Instance.TriggerStartGame();
+            // ✅ RPC ẩn lobby cho tất cả Client qua NetworkObject
+            // Tìm tất cả NetworkPlayerSync đã spawn và báo hiệu
+            foreach (var obj in _spawnedPlayers.Values)
+            {
+                if (obj != null)
+                {
+                    var sync = obj.GetComponent<NetworkPlayerSync>();
+                    if (sync != null) sync.RpcHideLobbyOnClients();
+                }
+            }
         }
     }
 
-    // ── Vào phòng ──────────────────────────────────────────
     public async void JoinRoom(string roomName)
     {
         Debug.Log("[NET] Đang vào phòng: " + roomName);
@@ -72,21 +76,37 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         var res = await _runner.StartGame(new StartGameArgs
         {
-            GameMode = GameMode.Client,
-            SessionName = roomName,
-            SceneManager = sceneManager,
+            GameMode        = GameMode.Client,
+            SessionName     = roomName,
+            SceneManager    = sceneManager,
             CustomLobbyName = "MainLobby",
         });
         if (!res.Ok) Debug.LogError("[NET] Không vào được phòng: " + res.ShutdownReason);
         else Debug.Log("[NET] Vào phòng thành công!");
     }
 
-    // ── Spawn / Despawn ────────────────────────────────────
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
         if (!runner.IsServer) return;
-        var pos = new Vector3(UnityEngine.Random.Range(-4f, 4f), 0, UnityEngine.Random.Range(-4f, 4f));
-        var obj = runner.Spawn(playerPrefab, pos, Quaternion.identity, player);
+
+        var spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
+        Vector3 spawnPos;
+        Quaternion spawnRot;
+
+        if (spawnPoints.Length > 0)
+        {
+            int index = _spawnedPlayers.Count % spawnPoints.Length;
+            spawnPos = spawnPoints[index].transform.position;
+            spawnRot = spawnPoints[index].transform.rotation;
+        }
+        else
+        {
+            spawnPos = new Vector3(UnityEngine.Random.Range(-4f, 4f), 1f, UnityEngine.Random.Range(-4f, 4f));
+            spawnRot = Quaternion.identity;
+            Debug.LogWarning("[NET] Không tìm thấy SpawnPoint!");
+        }
+
+        var obj = runner.Spawn(playerPrefab, spawnPos, spawnRot, player);
         _spawnedPlayers[player] = obj;
     }
 
@@ -100,16 +120,15 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    // ── Input ──────────────────────────────────────────────
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
         var data = new NetworkInputData();
         var move = Vector2.zero;
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) move.y += 1;
-        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) move.y -= 1;
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) move.x -= 1;
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))    move.y += 1;
+        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))  move.y -= 1;
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))  move.x -= 1;
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) move.x += 1;
-        data.move = move.normalized;
+        data.move   = move.normalized;
         data.sprint = Input.GetKey(KeyCode.LeftShift);
         input.Set(data);
     }
@@ -121,7 +140,6 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         lobbyUI?.BuildRoomList(sessionList);
     }
 
-    // ── Callbacks ──────────────────────────────────────────
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnShutdown(NetworkRunner runner, ShutdownReason reason) { Debug.Log("[NET] Shutdown: " + reason); }
     public void OnConnectedToServer(NetworkRunner runner) { }
@@ -139,5 +157,3 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
 }
-
-// Xóa struct NetworkInputData cũ ở cuối file và thay bằng cái này
