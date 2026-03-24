@@ -4,17 +4,18 @@ using UnityEngine;
 public class NetworkPlayerSync : NetworkBehaviour
 {
     private ThirdPersonController _controller;
+    private CharacterController _cc;
     private PlayerHealth _health;
     private AttackComboController _attack;
     private RollController _roll;
-
-    // ✅ Reference đến LobbyUI để ẩn khi nhận RPC
     private LobbyUI _lobbyUI;
+
+    // Cache camera yaw để tính hướng di chuyển
+    private ThirdPersonCamera _camera;
 
     void Awake()
     {
         _controller = GetComponent<ThirdPersonController>();
-        // Set trước khi Start() của ThirdPersonController chạy
         if (_controller != null)
             _controller.isNetworkControlled = true;
     }
@@ -22,25 +23,26 @@ public class NetworkPlayerSync : NetworkBehaviour
     public override void Spawned()
     {
         _controller = GetComponent<ThirdPersonController>();
-        _health     = GetComponent<PlayerHealth>();
-        _attack     = GetComponent<AttackComboController>();
-        _roll       = GetComponent<RollController>();
-        _lobbyUI    = FindFirstObjectByType<LobbyUI>();
+        _cc = GetComponent<CharacterController>();
+        _health = GetComponent<PlayerHealth>();
+        _attack = GetComponent<AttackComboController>();
+        _roll = GetComponent<RollController>();
+        _lobbyUI = FindFirstObjectByType<LobbyUI>();
 
         if (HasInputAuthority)
         {
+            // ✅ Tắt ThirdPersonController.Update() hoàn toàn
+            // Fusion sẽ tự gọi movement trong FixedUpdateNetwork
             _controller.isNetworkControlled = true;
-            _controller.enabled = true;
-            _controller.EnableInput();
+            _controller.enabled = false; // tắt Update() của controller
+            _controller.EnableInput();   // bật Input System để đọc input
 
             if (_attack != null) _attack.enabled = true;
-            if (_roll   != null) _roll.enabled   = true;
+            if (_roll != null) _roll.enabled = true;
 
-            var camera = FindFirstObjectByType<ThirdPersonCamera>();
-            if (camera != null)
-                camera.SetTarget(transform);
-            else
-                Debug.LogWarning("[NET] Không tìm thấy ThirdPersonCamera!");
+            _camera = FindFirstObjectByType<ThirdPersonCamera>();
+            if (_camera != null)
+                _camera.SetTarget(transform);
 
             var healthBar = FindFirstObjectByType<PlayerHealthBar>();
             if (healthBar != null)
@@ -55,7 +57,7 @@ public class NetworkPlayerSync : NetworkBehaviour
             _controller.DisableInput();
 
             if (_attack != null) _attack.enabled = false;
-            if (_roll   != null) _roll.enabled   = false;
+            if (_roll != null) _roll.enabled = false;
 
             Debug.Log("[NET] Remote player spawned: " + gameObject.name);
         }
@@ -64,16 +66,74 @@ public class NetworkPlayerSync : NetworkBehaviour
     public override void FixedUpdateNetwork()
     {
         if (!HasInputAuthority) return;
-        if (_controller == null || !_controller.enabled) return;
+        if (_cc == null) return;
 
         if (GetInput(out NetworkInputData input))
         {
-            // ✅ Chỉ set input — ThirdPersonController.Update() sẽ không đọc input riêng
-            _controller.SetNetworkInput(input.move, input.sprint);
+            bool isAttacking = _attack != null && _attack.IsAttacking();
+            bool isRolling = _roll != null && _roll.IsRolling();
+            bool isInImpact = _health != null && _health.IsInImpact();
+            bool isDead = _health != null && _health.IsDead();
+
+            Animator animator = _controller.animator;
+
+            if (isAttacking || isRolling || isInImpact || isDead)
+            {
+                if (animator != null)
+                {
+                    animator.SetFloat("Speed", 0);
+                    animator.SetBool("IsMoving", false);
+                }
+                return;
+            }
+
+            Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
+
+            if (inputDir.magnitude >= 0.1f)
+            {
+                float cameraYaw = _camera != null
+                    ? _camera.GetCameraYaw()
+                    : transform.eulerAngles.y;
+
+                Vector3 camForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
+                Vector3 camRight = Quaternion.Euler(0, cameraYaw, 0) * Vector3.right;
+                Vector3 moveDir = (camForward * input.move.y + camRight * input.move.x).normalized;
+
+                float speed = input.sprint ? _controller.sprintSpeed : _controller.moveSpeed;
+
+                // ✅ Gọi trực tiếp CharacterController.Move()
+                _cc.Move(moveDir * speed * Runner.DeltaTime);
+
+                // Xoay nhân vật
+                if (moveDir != Vector3.zero)
+                {
+                    transform.rotation = Quaternion.Slerp(
+                        transform.rotation,
+                        Quaternion.LookRotation(moveDir),
+                        _controller.rotationSpeed * Runner.DeltaTime
+                    );
+                }
+
+                if (animator != null)
+                {
+                    animator.SetFloat("Speed", speed);
+                    animator.SetBool("IsMoving", true);
+                }
+            }
+            else
+            {
+                if (animator != null)
+                {
+                    animator.SetFloat("Speed", 0);
+                    animator.SetBool("IsMoving", false);
+                }
+            }
+
+            // Gravity
+            _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime * Runner.DeltaTime);
         }
     }
 
-    // ✅ Host gọi để ẩn lobby trên tất cả client
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RpcHideLobbyOnClients()
     {
