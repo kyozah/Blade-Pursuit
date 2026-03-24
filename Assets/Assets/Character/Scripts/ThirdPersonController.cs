@@ -9,10 +9,7 @@ public class ThirdPersonController : MonoBehaviour
     public float rotationSpeed = 10f;
 
     [Header("Attack Settings")]
-    [Tooltip("Tự động xoay về hướng camera khi bắt đầu tấn công")]
     public bool autoRotateTowardsCameraOnAttack = true;
-
-    [Tooltip("Tốc độ xoay về hướng camera khi tấn công")]
     public float attackStartRotationSpeed = 15f;
 
     [Header("Ground Check")]
@@ -29,10 +26,13 @@ public class ThirdPersonController : MonoBehaviour
     private bool isGrounded;
     private float gravity = -9.81f;
 
-    // Input System
+    // ── Input: local hoặc từ network ──────────────────────
     private PlayerInputActions inputActions;
     private Vector2 moveInput;
     private bool isSprinting;
+
+    // ✅ Network mode: true = nhận input từ NetworkPlayerSync
+    [HideInInspector] public bool isNetworkControlled = false;
 
     // References
     private AttackComboController attackController;
@@ -46,12 +46,14 @@ public class ThirdPersonController : MonoBehaviour
 
     void OnEnable()
     {
-        inputActions.Player.Enable();
+        if (!isNetworkControlled)
+            inputActions.Player.Enable();
     }
 
     void OnDisable()
     {
-        inputActions.Player.Disable();
+        if (!isNetworkControlled)
+            inputActions.Player.Disable();
     }
 
     void Start()
@@ -59,49 +61,40 @@ public class ThirdPersonController : MonoBehaviour
         controller = GetComponent<CharacterController>();
 
         if (controller == null)
-        {
             Debug.LogError("❌ CharacterController not found!");
-        }
 
         if (cameraController == null)
-        {
             cameraController = FindFirstObjectByType<ThirdPersonCamera>();
-        }
 
         if (animator == null)
-        {
             animator = GetComponentInChildren<Animator>();
-        }
 
         attackController = GetComponent<AttackComboController>();
-        if (attackController == null)
-        {
-            Debug.LogWarning("⚠ AttackComboController not found.");
-        }
-        else
-        {
+        if (attackController != null)
             attackController.OnAttackStart += HandleAttackStart;
-        }
+        else
+            Debug.LogWarning("⚠ AttackComboController not found.");
 
         rollController = GetComponent<RollController>();
         if (rollController == null)
-        {
             Debug.LogWarning("⚠ RollController not found.");
-        }
 
         playerHealth = GetComponent<PlayerHealth>();
         if (playerHealth == null)
-        {
             Debug.LogWarning("⚠ PlayerHealth not found.");
-        }
     }
 
     void OnDestroy()
     {
         if (attackController != null)
-        {
             attackController.OnAttackStart -= HandleAttackStart;
-        }
+    }
+
+    // ✅ NetworkPlayerSync gọi hàm này để truyền input vào
+    public void SetNetworkInput(Vector2 move, bool sprint)
+    {
+        moveInput = move;
+        isSprinting = sprint;
     }
 
     void HandleAttackStart()
@@ -117,14 +110,15 @@ public class ThirdPersonController : MonoBehaviour
                 targetRotation,
                 attackStartRotationSpeed * Time.deltaTime * 10f
             );
-
-            Debug.DrawRay(transform.position + Vector3.up, cameraForward * 3f, Color.red, 1f);
         }
     }
 
     void Update()
     {
-        ReadInput();
+        // Chỉ đọc local input nếu không phải network controlled
+        if (!isNetworkControlled)
+            ReadInput();
+
         HandleGroundCheck();
         HandleMovement();
         HandleGravity();
@@ -141,23 +135,16 @@ public class ThirdPersonController : MonoBehaviour
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
         if (isGrounded && velocity.y < 0)
-        {
             velocity.y = -2f;
-        }
     }
 
     void HandleMovement()
     {
         bool isAttacking = attackController != null && attackController.IsAttacking();
         bool isRolling = rollController != null && rollController.IsRolling();
-
-        // ✅ NEW: Check if in impact state
         bool isInImpact = playerHealth != null && playerHealth.IsInImpact();
-
-        // ✅ NEW: Check if dead
         bool isDead = playerHealth != null && playerHealth.IsDead();
 
-        // ✅ LOCK movement khi: attack, roll, impact, hoặc dead
         if (isAttacking || isRolling || isInImpact || isDead)
         {
             if (animator != null)
@@ -165,26 +152,22 @@ public class ThirdPersonController : MonoBehaviour
                 animator.SetFloat("Speed", 0);
                 animator.SetBool("IsMoving", false);
             }
-
-            return; // ❌ KHÔNG di chuyển
+            return;
         }
 
         Vector3 inputDirection = new Vector3(moveInput.x, 0, moveInput.y).normalized;
 
         if (inputDirection.magnitude >= 0.1f)
         {
-            float cameraYaw = cameraController != null ? cameraController.GetCameraYaw() : transform.eulerAngles.y;
+            float cameraYaw = cameraController != null
+                ? cameraController.GetCameraYaw()
+                : transform.eulerAngles.y;
 
             Vector3 cameraForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
             Vector3 cameraRight = Quaternion.Euler(0, cameraYaw, 0) * Vector3.right;
-
             Vector3 moveDirection = (cameraForward * moveInput.y + cameraRight * moveInput.x).normalized;
 
-            Debug.DrawRay(transform.position + Vector3.up, moveDirection * 2f, Color.green);
-            Debug.DrawRay(transform.position + Vector3.up, cameraForward * 2f, Color.blue);
-
             float currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
-
             controller.Move(moveDirection * currentSpeed * Time.deltaTime);
 
             if (moveDirection != Vector3.zero)

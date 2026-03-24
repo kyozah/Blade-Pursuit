@@ -9,6 +9,9 @@ public class LobbyUI : MonoBehaviour
     [Header("Tham chiếu")]
     public NetworkManager networkManager;
 
+    [Header("Panel Lobby (ẩn khi vào game)")]
+    public GameObject lobbyPanel;   // Gán toàn bộ Canvas/Panel lobby vào đây
+
     [Header("Tạo phòng")]
     public TMP_InputField createRoomInput;
     public Button createRoomButton;
@@ -18,7 +21,7 @@ public class LobbyUI : MonoBehaviour
     public Button joinRoomButton;
 
     [Header("Bắt đầu game (chỉ Host thấy)")]
-    public Button startGameButton;   // ✅ Tạo thêm Button này trong Unity UI
+    public Button startGameButton;
 
     [Header("Danh sách phòng")]
     public Transform roomListContainer;
@@ -31,7 +34,7 @@ public class LobbyUI : MonoBehaviour
         networkManager.JoinLobby();
 
         if (startGameButton != null)
-            startGameButton.gameObject.SetActive(false); // ẩn mặc định
+            startGameButton.gameObject.SetActive(false);
 
         createRoomButton.onClick.AddListener(() =>
         {
@@ -39,7 +42,6 @@ public class LobbyUI : MonoBehaviour
             if (!string.IsNullOrEmpty(name))
             {
                 networkManager.CreateRoom(name);
-                // Hiện nút Start cho Host sau khi tạo phòng
                 if (startGameButton != null)
                     startGameButton.gameObject.SetActive(true);
             }
@@ -53,6 +55,20 @@ public class LobbyUI : MonoBehaviour
 
         if (startGameButton != null)
             startGameButton.onClick.AddListener(() => networkManager.StartGame());
+    }
+
+    // Gọi khi bắt đầu game — ẩn lobby UI đi
+    public void HideLobby()
+    {
+        if (lobbyPanel != null)
+            lobbyPanel.SetActive(false);
+    }
+
+    // Gọi khi muốn quay về lobby
+    public void ShowLobby()
+    {
+        if (lobbyPanel != null)
+            lobbyPanel.SetActive(true);
     }
 
     public void BuildRoomList(List<SessionInfo> sessions)

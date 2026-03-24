@@ -15,34 +15,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
     void Awake()
     {
-        // Nếu đã có NetworkManager khác (từ lần play trước), xóa cái mới
-        var existing = FindObjectsByType<NetworkManager>(FindObjectsSortMode.None);
-        if (existing.Length > 1)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        DontDestroyOnLoad(gameObject);
-
-        // Xóa runner cũ còn sót
-        foreach (var r in gameObject.GetComponents<NetworkRunner>())
-            Destroy(r);
-
         _runner = gameObject.AddComponent<NetworkRunner>();
         _runner.ProvideInput = true;
         _runner.AddCallbacks(this);
-    }
-
-    async void OnApplicationQuit()
-    {
-        if (_runner != null) await _runner.Shutdown();
-    }
-
-    async void OnDisable()
-    {
-        if (_runner != null && _runner.IsRunning)
-            await _runner.Shutdown();
+        DontDestroyOnLoad(gameObject);
     }
 
     // ── Lobby ──────────────────────────────────────────────
@@ -68,20 +44,22 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             IsVisible = true,
             IsOpen = true,
             CustomLobbyName = "MainLobby",
-            // Không load scene ở đây — giữ Host trong lobby
-            // Scene sẽ được load khi nhấn nút "Bắt đầu"
         });
         if (!res.Ok) Debug.LogError("[NET] Không tạo được phòng: " + res.ShutdownReason);
         else Debug.Log("[NET] Tạo phòng thành công: " + roomName);
     }
 
-    // ── Bắt đầu game (Host gọi khi muốn start) ────────────
+    // ── Bắt đầu game (Host gọi) ───────────────────────────
     public void StartGame()
     {
         if (_runner != null && _runner.IsServer)
         {
-            Debug.Log("[NET] Host load scene Gameplay...");
-            _runner.LoadScene(SceneRef.FromIndex(1));
+            Debug.Log("[NET] Bắt đầu game!");
+            // Ẩn lobby Host trước
+            lobbyUI?.HideLobby();
+            // Ra lệnh ẩn lobby cho tất cả Client qua RPC
+            if (GameController.Instance != null)
+                GameController.Instance.TriggerStartGame();
         }
     }
 
@@ -132,6 +110,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) move.x -= 1;
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) move.x += 1;
         data.move = move.normalized;
+        data.sprint = Input.GetKey(KeyCode.LeftShift);
         input.Set(data);
     }
 
@@ -153,15 +132,12 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
     public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
-    public void OnSceneLoadDone(NetworkRunner runner) { Debug.Log("[NET] Scene load xong!"); }
-    public void OnSceneLoadStart(NetworkRunner runner) { Debug.Log("[NET] Đang load scene..."); }
+    public void OnSceneLoadDone(NetworkRunner runner) { }
+    public void OnSceneLoadStart(NetworkRunner runner) { }
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
 }
 
-public struct NetworkInputData : INetworkInput
-{
-    public Vector2 move;
-}
+// Xóa struct NetworkInputData cũ ở cuối file và thay bằng cái này
