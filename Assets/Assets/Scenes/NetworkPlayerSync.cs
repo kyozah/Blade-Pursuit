@@ -31,13 +31,15 @@ public class NetworkPlayerSync : NetworkBehaviour
 
         if (HasInputAuthority)
         {
-            // ✅ Tắt ThirdPersonController.Update() hoàn toàn
-            // Fusion sẽ tự gọi movement trong FixedUpdateNetwork
             _controller.isNetworkControlled = true;
-            _controller.enabled = false; // tắt Update() của controller
-            _controller.EnableInput();   // bật Input System để đọc input
+            _controller.enabled = false;
+            _controller.EnableInput();
 
-            if (_attack != null) _attack.enabled = true;
+            if (_attack != null)
+            {
+                _attack.isNetworkControlled = true;
+                _attack.enabled = true;
+            }
             if (_roll != null) _roll.enabled = true;
 
             _camera = FindFirstObjectByType<ThirdPersonCamera>();
