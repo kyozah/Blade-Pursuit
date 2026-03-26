@@ -21,7 +21,6 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         DontDestroyOnLoad(gameObject);
     }
 
-    // ── Lobby ──────────────────────────────────────────────
     public async void JoinLobby()
     {
         Debug.Log("[NET] Đang kết nối lobby...");
@@ -30,7 +29,6 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         else Debug.Log("[NET] Vào lobby thành công!");
     }
 
-    // ── Tạo phòng ──────────────────────────────────────────
     public async void CreateRoom(string roomName)
     {
         var sceneManager = gameObject.GetComponent<NetworkSceneManagerDefault>()
@@ -38,71 +36,38 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         var res = await _runner.StartGame(new StartGameArgs
         {
-            GameMode = GameMode.Host,
-            SessionName = roomName,
-            SceneManager = sceneManager,
-            IsVisible = true,
-            IsOpen = true,
+            GameMode        = GameMode.Host,
+            SessionName     = roomName,
+            SceneManager    = sceneManager,
+            IsVisible       = true,
+            IsOpen          = true,
             CustomLobbyName = "MainLobby",
-            // Không load scene ở đây — giữ Host trong lobby
-            // Scene sẽ được load khi nhấn nút "Bắt đầu"
         });
         if (!res.Ok) Debug.LogError("[NET] Không tạo được phòng: " + res.ShutdownReason);
         else Debug.Log("[NET] Tạo phòng thành công: " + roomName);
     }
 
-    // ── Bắt đầu game (Host gọi khi muốn start) ────────────
-    // ── Bắt đầu game (Host gọi khi nhấn nút) ────────────
+    // ── Bắt đầu game ──────────────────────────────────────
     public void StartGame()
     {
-        // Kiểm tra IsServer vì chỉ Host mới có quyền đổi Scene cho cả phòng
         if (_runner != null && _runner.IsServer)
         {
-            Debug.Log("[NET] Host yêu cầu tất cả chuyển sang scene Gameplay...");
-            
-            // QUAN TRỌNG: Đảm bảo Scene Gameplay ở Index 1 trong Build Settings
-            _runner.LoadScene(SceneRef.FromIndex(1)); 
-        }
-    }
-
-    // ── Player Joined (Lúc này vẫn đang ở Lobby) ────────
-    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
-    {
-        // KHÔNG SPAWN Ở ĐÂY. 
-        // Nếu spawn ở đây, nhân vật sẽ xuất hiện ở Scene Lobby (Index 0).
-        Debug.Log($"[NET] Player {player} đã vào phòng chờ.");
-    }
-
-    // ── Khi Scene Gameplay đã load xong trên máy ─────────
-    public void OnSceneLoadDone(NetworkRunner runner)
-    {
-        // Fix lỗi gạch đỏ: runner.CurrentScene không tồn tại trực tiếp trong một số bản Fusion
-        Debug.Log("[NET] Một Scene mới đã được load xong trên máy này!");
-
-        // Chỉ Host/Server mới có quyền thực hiện lệnh Spawn để đồng bộ cho tất cả
-        if (runner.IsServer) 
-        {
-            // runner.ActivePlayers chứa danh sách tất cả người chơi đã kết nối thành công
-            foreach (var player in runner.ActivePlayers)
+            Debug.Log("[NET] Bắt đầu game!");
+            // ✅ Ẩn lobby ngay lập tức cho Host (không cần RPC)
+            lobbyUI?.HideLobby();
+            // ✅ RPC ẩn lobby cho tất cả Client qua NetworkObject
+            // Tìm tất cả NetworkPlayerSync đã spawn và báo hiệu
+            foreach (var obj in _spawnedPlayers.Values)
             {
-                // Kiểm tra tránh spawn trùng nếu scene load lại hoặc có người vào sau
-                if (!_spawnedPlayers.ContainsKey(player))
+                if (obj != null)
                 {
-                    Debug.Log($"[NET] Đang Spawn nhân vật cho Player: {player}");
-                    
-                    // Đặt Y = 1 để nhân vật rơi nhẹ xuống sàn, tránh bị kẹt (glitch) dưới đất
-                    Vector3 spawnPos = new Vector3(UnityEngine.Random.Range(-4f, 4f), 1f, UnityEngine.Random.Range(-4f, 4f));
-                    
-                    // Spawn prefab và gán quyền điều khiển (Input Authority) cho đúng người chơi
-                    NetworkObject playerObject = runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
-                    
-                    // Lưu vào Dictionary để quản lý (ví dụ: để xóa khi họ thoát)
-                    _spawnedPlayers.Add(player, playerObject);
+                    var sync = obj.GetComponent<NetworkPlayerSync>();
+                    if (sync != null) sync.RpcHideLobbyOnClients();
                 }
             }
         }
     }
-    // ── Vào phòng ──────────────────────────────────────────
+
     public async void JoinRoom(string roomName)
     {
         Debug.Log("[NET] Đang vào phòng: " + roomName);
@@ -111,17 +76,39 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         var res = await _runner.StartGame(new StartGameArgs
         {
-            GameMode = GameMode.Client,
-            SessionName = roomName,
-            SceneManager = sceneManager,
+            GameMode        = GameMode.Client,
+            SessionName     = roomName,
+            SceneManager    = sceneManager,
             CustomLobbyName = "MainLobby",
         });
         if (!res.Ok) Debug.LogError("[NET] Không vào được phòng: " + res.ShutdownReason);
         else Debug.Log("[NET] Vào phòng thành công!");
     }
 
-    // ── Spawn / Despawn ────────────────────────────────────
-    
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
+    {
+        if (!runner.IsServer) return;
+
+        var spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
+        Vector3 spawnPos;
+        Quaternion spawnRot;
+
+        if (spawnPoints.Length > 0)
+        {
+            int index = _spawnedPlayers.Count % spawnPoints.Length;
+            spawnPos = spawnPoints[index].transform.position;
+            spawnRot = spawnPoints[index].transform.rotation;
+        }
+        else
+        {
+            spawnPos = new Vector3(UnityEngine.Random.Range(-4f, 4f), 1f, UnityEngine.Random.Range(-4f, 4f));
+            spawnRot = Quaternion.identity;
+            Debug.LogWarning("[NET] Không tìm thấy SpawnPoint!");
+        }
+
+        var obj = runner.Spawn(playerPrefab, spawnPos, spawnRot, player);
+        _spawnedPlayers[player] = obj;
+    }
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
@@ -133,16 +120,16 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
-    // ── Input ──────────────────────────────────────────────
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
         var data = new NetworkInputData();
         var move = Vector2.zero;
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) move.y += 1;
-        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) move.y -= 1;
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) move.x -= 1;
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))    move.y += 1;
+        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))  move.y -= 1;
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))  move.x -= 1;
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) move.x += 1;
-        data.move = move.normalized;
+        data.move   = move.normalized;
+        data.sprint = Input.GetKey(KeyCode.LeftShift);
         input.Set(data);
     }
 
@@ -153,7 +140,6 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         lobbyUI?.BuildRoomList(sessionList);
     }
 
-    // ── Callbacks ──────────────────────────────────────────
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnShutdown(NetworkRunner runner, ShutdownReason reason) { Debug.Log("[NET] Shutdown: " + reason); }
     public void OnConnectedToServer(NetworkRunner runner) { }
@@ -164,15 +150,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
     public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
-    
-    public void OnSceneLoadStart(NetworkRunner runner) { Debug.Log("[NET] Đang load scene..."); }
+    public void OnSceneLoadDone(NetworkRunner runner) { }
+    public void OnSceneLoadStart(NetworkRunner runner) { }
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
-}
-
-public struct NetworkInputData : INetworkInput
-{
-    public Vector2 move;
 }
