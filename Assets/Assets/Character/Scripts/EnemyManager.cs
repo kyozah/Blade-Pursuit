@@ -40,29 +40,36 @@ public class EnemyManager : MonoBehaviour
 
     void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        if (player == null)
-        {
-            Debug.LogError("Player not found! Make sure player has tag 'Player'");
-        }
-
+        // Kiểm tra Collider ngay từ đầu
         Collider col = GetComponent<Collider>();
         if (col == null)
         {
             Debug.LogError($"EnemyManager '{gameObject.name}' missing Collider! Add a Collider and set 'IsTrigger' = true.");
         }
-        else
+        else if (!col.isTrigger)
         {
-            if (!col.isTrigger)
-            {
-                Debug.LogWarning($"EnemyManager '{gameObject.name}' Collider 'IsTrigger' = false. OnTriggerEnter won't fire.");
-            }
+            Debug.LogWarning($"EnemyManager '{gameObject.name}' Collider 'IsTrigger' = false. OnTriggerEnter won't fire.");
+        }
+    }
 
-            // If player already inside zone at start, spawn immediately
-            if (player != null && col.bounds.Contains(player.position))
+    void Update()
+    {
+        // Nếu chưa tìm thấy player, hãy thử tìm mỗi Frame cho đến khi thấy
+        if (player == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
             {
-                playerInZone = true;
-                SpawnEnemies();
+                player = playerObj.transform;
+                Debug.Log("[EnemyManager] Đã tìm thấy Player mạng!");
+
+                // Kiểm tra xem player có đang đứng sẵn trong vùng kích hoạt không
+                Collider col = GetComponent<Collider>();
+                if (col != null && col.bounds.Contains(player.position))
+                {
+                    playerInZone = true;
+                    SpawnEnemies();
+                }
             }
         }
     }
