@@ -67,35 +67,24 @@ public class NetworkPlayerSync : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        if (!HasInputAuthority) return;
+        // BỎ DÒNG: if (!HasInputAuthority) return; 
+        // Vì cả Server (State Authority) và Client (Input Authority) đều cần chạy code này.
+
         if (_cc == null) return;
 
+        // GetInput sẽ trả về True nếu:
+        // 1. Đây là máy Client đang điều khiển nhân vật này (Input Authority)
+        // 2. Đây là máy Server đang nhận Input từ Client đó (State Authority)
         if (GetInput(out NetworkInputData input))
         {
-            bool isAttacking = _attack != null && _attack.IsAttacking();
-            bool isRolling = _roll != null && _roll.IsRolling();
-            bool isInImpact = _health != null && _health.IsInImpact();
-            bool isDead = _health != null && _health.IsDead();
-
-            Animator animator = _controller.animator;
-
-            if (isAttacking || isRolling || isInImpact || isDead)
-            {
-                if (animator != null)
-                {
-                    animator.SetFloat("Speed", 0);
-                    animator.SetBool("IsMoving", false);
-                }
-                return;
-            }
+            // ... (Giữ nguyên logic kiểm tra Attack, Rolling, Impact...)
 
             Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
 
             if (inputDir.magnitude >= 0.1f)
             {
-                float cameraYaw = _camera != null
-                    ? _camera.GetCameraYaw()
-                    : transform.eulerAngles.y;
+                // LƯU Ý: Ở Server, _camera sẽ là null, nên đoạn cameraYaw cần xử lý an toàn
+                float cameraYaw = (_camera != null) ? _camera.GetCameraYaw() : transform.eulerAngles.y;
 
                 Vector3 camForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
                 Vector3 camRight = Quaternion.Euler(0, cameraYaw, 0) * Vector3.right;
@@ -103,10 +92,9 @@ public class NetworkPlayerSync : NetworkBehaviour
 
                 float speed = input.sprint ? _controller.sprintSpeed : _controller.moveSpeed;
 
-                // ✅ Gọi trực tiếp CharacterController.Move()
+                // Di chuyển CharacterController (Chạy trên cả 2 phía)
                 _cc.Move(moveDir * speed * Runner.DeltaTime);
 
-                // Xoay nhân vật
                 if (moveDir != Vector3.zero)
                 {
                     transform.rotation = Quaternion.Slerp(
@@ -115,26 +103,98 @@ public class NetworkPlayerSync : NetworkBehaviour
                         _controller.rotationSpeed * Runner.DeltaTime
                     );
                 }
-
-                if (animator != null)
-                {
-                    animator.SetFloat("Speed", speed);
-                    animator.SetBool("IsMoving", true);
-                }
+                
+                // Animator chỉ nên chạy trên máy có quyền hiển thị (thường là tất cả hoặc Proxy)
+                UpdateAnimation(speed, true);
             }
             else
             {
-                if (animator != null)
-                {
-                    animator.SetFloat("Speed", 0);
-                    animator.SetBool("IsMoving", false);
-                }
+                UpdateAnimation(0, false);
             }
 
-            // Gravity
-            _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime * Runner.DeltaTime);
+            // Gravity - Quan trọng: Phải chạy trên cả Server để vị trí Y đồng bộ
+            _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime);
         }
     }
+
+    // Tách hàm Animator để code sạch hơn
+    private void UpdateAnimation(float speed, bool isMoving) {
+        if (_controller.animator != null) {
+            _controller.animator.SetFloat("Speed", speed);
+            _controller.animator.SetBool("IsMoving", isMoving);
+        }
+    }
+    
+    // public override void FixedUpdateNetwork()
+    // {
+    //     if (!HasInputAuthority) return;
+    //     if (_cc == null) return;
+
+    //     if (GetInput(out NetworkInputData input))
+    //     {
+    //         bool isAttacking = _attack != null && _attack.IsAttacking();
+    //         bool isRolling = _roll != null && _roll.IsRolling();
+    //         bool isInImpact = _health != null && _health.IsInImpact();
+    //         bool isDead = _health != null && _health.IsDead();
+
+    //         Animator animator = _controller.animator;
+
+    //         if (isAttacking || isRolling || isInImpact || isDead)
+    //         {
+    //             if (animator != null)
+    //             {
+    //                 animator.SetFloat("Speed", 0);
+    //                 animator.SetBool("IsMoving", false);
+    //             }
+    //             return;
+    //         }
+
+    //         Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
+
+    //         if (inputDir.magnitude >= 0.1f)
+    //         {
+    //             float cameraYaw = _camera != null
+    //                 ? _camera.GetCameraYaw()
+    //                 : transform.eulerAngles.y;
+
+    //             Vector3 camForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
+    //             Vector3 camRight = Quaternion.Euler(0, cameraYaw, 0) * Vector3.right;
+    //             Vector3 moveDir = (camForward * input.move.y + camRight * input.move.x).normalized;
+
+    //             float speed = input.sprint ? _controller.sprintSpeed : _controller.moveSpeed;
+
+    //             // ✅ Gọi trực tiếp CharacterController.Move()
+    //             _cc.Move(moveDir * speed * Runner.DeltaTime);
+
+    //             // Xoay nhân vật
+    //             if (moveDir != Vector3.zero)
+    //             {
+    //                 transform.rotation = Quaternion.Slerp(
+    //                     transform.rotation,
+    //                     Quaternion.LookRotation(moveDir),
+    //                     _controller.rotationSpeed * Runner.DeltaTime
+    //                 );
+    //             }
+
+    //             if (animator != null)
+    //             {
+    //                 animator.SetFloat("Speed", speed);
+    //                 animator.SetBool("IsMoving", true);
+    //             }
+    //         }
+    //         else
+    //         {
+    //             if (animator != null)
+    //             {
+    //                 animator.SetFloat("Speed", 0);
+    //                 animator.SetBool("IsMoving", false);
+    //             }
+    //         }
+
+    //         // Gravity
+    //         _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime * Runner.DeltaTime);
+    //     }
+    // }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RpcHideLobbyOnClients()

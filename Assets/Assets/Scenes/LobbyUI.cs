@@ -86,7 +86,7 @@ public class LobbyUI : MonoBehaviour
         if (lobbyPanel != null)
             lobbyPanel.SetActive(true);
     }
-
+    
     [Header("Disconnected Message")]
     public TMP_Text disconnectedText; // Assign a TextMeshPro text in the UI
 
