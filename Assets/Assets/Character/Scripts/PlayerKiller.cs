@@ -83,7 +83,7 @@ public class PlayerKiller : MonoBehaviour
     {
         if (playerHealth == null)
         {
-            playerHealth = FindObjectOfType<PlayerHealth>();
+            playerHealth = FindFirstObjectByType<PlayerHealth>();
         }
 
         if (playerHealth != null)

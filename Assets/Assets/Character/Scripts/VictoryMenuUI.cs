@@ -58,7 +58,7 @@ public class VictoryMenuUI : MonoBehaviour
         if (bosses == null || bosses.Length == 0)
         {
             Debug.LogWarning("[VictoryMenuUI] No bosses assigned. Attempting auto-discovery...");
-            bosses = Object.FindObjectsOfType<BossHealth>();
+            bosses = Object.FindObjectsByType<BossHealth>(FindObjectsSortMode.None);
             if (bosses != null && bosses.Length > 0)
             {
                 Debug.Log($"[VictoryMenuUI] Auto-discovered {bosses.Length} boss(es)");
