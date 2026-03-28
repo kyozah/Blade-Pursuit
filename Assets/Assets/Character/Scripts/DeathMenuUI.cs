@@ -47,7 +47,7 @@ public class DeathMenuUI : MonoBehaviour
             Debug.LogWarning("[DeathMenuUI] Menu button not assigned");
 
         // Subscribe to player death
-        PlayerHealth playerHealth = FindObjectOfType<PlayerHealth>();
+        PlayerHealth playerHealth = FindFirstObjectByType<PlayerHealth>();
         if (playerHealth != null)
         {
             // Không có event, nên ta phải check trong Update
@@ -60,7 +60,7 @@ public class DeathMenuUI : MonoBehaviour
         // Check nếu player đã chết mà menu chưa hiển thị
         if (!isVisible)
         {
-            PlayerHealth playerHealth = FindObjectOfType<PlayerHealth>();
+            PlayerHealth playerHealth = FindFirstObjectByType<PlayerHealth>();
             if (playerHealth != null && playerHealth.IsDead())
             {
                 // Chờ 2 giây nữa rồi show menu
@@ -125,7 +125,7 @@ public class DeathMenuUI : MonoBehaviour
 
     private void DisableOtherCanvasGroups()
     {
-        CanvasGroup[] all = FindObjectsOfType<CanvasGroup>();
+        CanvasGroup[] all = FindObjectsByType<CanvasGroup>(FindObjectsSortMode.None);
         foreach (var cg in all)
         {
             if (cg == canvasGroup) continue;
