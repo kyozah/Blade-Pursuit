@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 
-public class PlayerHealthBar : MonoBehaviour
+public class PlayerHealthBar1 : MonoBehaviour
 {
     [Header("References")]
     public PlayerHealth playerHealth;
@@ -57,4 +58,5 @@ public class PlayerHealthBar : MonoBehaviour
             healthText.text = $"{Mathf.RoundToInt(current)} / {Mathf.RoundToInt(max)}";
         }
     }
+
 }

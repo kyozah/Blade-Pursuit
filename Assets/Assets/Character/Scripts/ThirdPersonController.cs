@@ -36,6 +36,7 @@ public class ThirdPersonController : MonoBehaviour
     private AttackComboController attackController;
     private RollController rollController;
     private PlayerHealth playerHealth;
+    internal object overheadHealthBar;
 
     void Awake()
     {

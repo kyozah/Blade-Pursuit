@@ -54,6 +54,8 @@ public class PlayerHealth : MonoBehaviour
     private RollController rollController;
     private PlayerAudioSystem audioSystem;
 
+    public float NetworkedHealth { get; internal set; }
+
     void Start()
     {
         currentHealth = maxHealth;

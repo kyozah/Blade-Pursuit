@@ -46,11 +46,17 @@ public class NetworkPlayerSync : NetworkBehaviour
             if (_camera != null)
                 _camera.SetTarget(transform);
 
-            var healthBar = FindFirstObjectByType<PlayerHealthBar>();
-            if (healthBar != null)
-                healthBar.SetTarget(_health);
+            GameObject hud = GameObject.FindGameObjectWithTag("MainHealthBar");
+            if (hud != null)
+            {
+                var healthBar = hud.GetComponent<PlayerHealthBar>();
+                if (healthBar != null)
+                    healthBar.SetTarget(_health);
+            }
 
             Debug.Log("[NET] Local player spawned: " + gameObject.name);
+
+            // Chỉ Host mới có quyền ẩn lobby, nên gọi RPC từ đây là hợp lý
         }
         else
         {
