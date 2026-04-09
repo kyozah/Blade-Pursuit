@@ -59,6 +59,8 @@ public class Enemy : MonoBehaviour
     private Coroutine knockbackCoroutine;
     private bool isDead = false; // true after Die() called to stop AI and interactions
     private EnemyAudioSystem audioSystem;
+    private EnemyNetworkSync networkSync;
+    private bool suppressNetworkForward;
 
     // damage stun: if enemy hurt, delay before next attack
     [Header("Pain / Stun")]
@@ -83,6 +85,7 @@ public class Enemy : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
         audioSystem = GetComponent<EnemyAudioSystem>();
+        networkSync = GetComponent<EnemyNetworkSync>();
 
         // Try to find animator in children if missing
         if (animator == null)
@@ -156,6 +159,7 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
+        if (!IsSimulationEnabled()) return;
         if (isDead) return; // dead enemies do nothing
         if (isKnockedBack) return; // allow chasing/movement while attacking
 
@@ -164,6 +168,7 @@ public class Enemy : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!IsSimulationEnabled()) return;
         // Đảm bảo Rigidbody không bị sleep
         if (rb != null && isKnockedBack)
         {
@@ -475,6 +480,17 @@ public class Enemy : MonoBehaviour
     // ✅ THÊM overload để nhận player forward direction
     public void TakeDamage(float damage, Vector3 attackerPosition, Vector3 attackerForward)
     {
+        if (networkSync != null && !suppressNetworkForward)
+        {
+            networkSync.RequestDamage(damage, attackerPosition, attackerForward);
+            return;
+        }
+
+        ApplyDamageAuthority(damage, attackerPosition, attackerForward);
+    }
+
+    public void ApplyDamageAuthority(float damage, Vector3 attackerPosition, Vector3 attackerForward)
+    {
         if (rb == null)
         {
             Debug.LogError("❌ No Rigidbody!");
@@ -731,5 +747,29 @@ public class Enemy : MonoBehaviour
     public bool IsDead
     {
         get { return isDead; }
+    }
+
+    public float GetCurrentHealth()
+    {
+        return currentHealth;
+    }
+
+    public void SetSimulationEnabled(bool enabled)
+    {
+        suppressNetworkForward = !enabled;
+    }
+
+    public void ApplyNetworkMirrorState(float hp, bool dead)
+    {
+        currentHealth = hp;
+        if (dead && !isDead)
+            Die();
+    }
+
+    private bool IsSimulationEnabled()
+    {
+        // Khi có EnemyNetworkSync, chỉ state authority mới chạy AI/physics.
+        if (networkSync == null) return true;
+        return networkSync.HasStateAuthority;
     }
 }

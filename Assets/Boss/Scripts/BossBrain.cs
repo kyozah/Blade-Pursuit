@@ -38,6 +38,7 @@ public class BossBrain : MonoBehaviour
     BossMovement movement;
     BossHealth health;
     Rigidbody rb;
+    private bool simulationEnabled = true;
 
     void Awake()
     {
@@ -49,6 +50,7 @@ public class BossBrain : MonoBehaviour
 
     void Update()
     {
+        if (!simulationEnabled) return;
         if (currentState == State.Dead) return;
 
         if (player == null)
@@ -256,6 +258,16 @@ public class BossBrain : MonoBehaviour
         movement.Lock();
         ClearPhysics();
         combat.DoDie();
+    }
+
+    public void SetSimulationEnabled(bool enabled)
+    {
+        simulationEnabled = enabled;
+        if (!enabled)
+        {
+            currentState = State.Idle;
+            movement?.Stop();
+        }
     }
 
     void OnDrawGizmosSelected()

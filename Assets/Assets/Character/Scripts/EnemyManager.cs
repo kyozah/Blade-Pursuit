@@ -106,6 +106,10 @@ public class EnemyManager : MonoBehaviour
 
     void SpawnEnemies()
     {
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner != null && !runner.IsServer)
+            return;
+
         if (hasSpawnedOnce) return; // guard in case called elsewhere
         // Remove destroyed/null entries before spawning
         enemies.RemoveAll(e => e == null);
@@ -148,7 +152,7 @@ public class EnemyManager : MonoBehaviour
                 }
             }
 
-            GameObject enemyObj = Instantiate(prefab, spawnPos, Quaternion.identity);
+            GameObject enemyObj = SpawnEnemyObject(prefab, spawnPos, runner);
             if (enemyObj == null)
             {
                 Debug.LogError($"Failed to instantiate prefab {prefab.name} at {spawnPos}");
@@ -331,5 +335,21 @@ public class EnemyManager : MonoBehaviour
         {
             currentAttackingEnemy = null;
         }
+    }
+
+    private GameObject SpawnEnemyObject(GameObject prefab, Vector3 spawnPos, NetworkRunner runner)
+    {
+        if (runner == null)
+            return Instantiate(prefab, spawnPos, Quaternion.identity);
+
+        var netObjPrefab = prefab.GetComponent<NetworkObject>();
+        if (netObjPrefab == null)
+        {
+            Debug.LogError($"Enemy prefab '{prefab.name}' thiếu NetworkObject. Thêm NetworkObject + EnemyNetworkSync để đồng bộ online.");
+            return null;
+        }
+
+        var spawned = runner.Spawn(netObjPrefab, spawnPos, Quaternion.identity, default);
+        return spawned != null ? spawned.gameObject : null;
     }
 }

@@ -23,9 +23,11 @@ public class BossHealth : MonoBehaviour
     public event Action<float, float> OnHealthChanged;
     // Event fired when boss dies
     public event Action OnDied;
+    private BossNetworkSync networkSync;
 
     void Awake()
     {
+        networkSync = GetComponentInParent<BossNetworkSync>();
         CurrentHP = MaxHP;
         OnHealthChanged?.Invoke(CurrentHP, MaxHP);
 
@@ -38,6 +40,17 @@ public class BossHealth : MonoBehaviour
     }
 
     public void TakeDamage(float dmg)
+    {
+        if (networkSync != null && !suppressForward)
+        {
+            networkSync.RequestDamage(dmg);
+            return;
+        }
+
+        TakeDamageAuthority(dmg);
+    }
+
+    public void TakeDamageAuthority(float dmg)
     {
         CurrentHP -= dmg;
         CurrentHP = Mathf.Clamp(CurrentHP, 0f, MaxHP);
@@ -58,6 +71,14 @@ public class BossHealth : MonoBehaviour
             if (rewardChest != null)
                 StartCoroutine(RevealChest());
         }
+    }
+
+    public void ApplyNetworkHp(float hp, bool dead)
+    {
+        CurrentHP = Mathf.Clamp(hp, 0f, MaxHP);
+        OnHealthChanged?.Invoke(CurrentHP, MaxHP);
+        if (dead)
+            GetComponentInParent<BossBrain>()?.OnDie();
     }
 
     System.Collections.IEnumerator RevealChest()
