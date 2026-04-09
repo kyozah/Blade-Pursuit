@@ -130,6 +130,11 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) move.x += 1;
         data.move   = move.normalized;
         data.sprint = Input.GetKey(KeyCode.LeftShift);
+        
+        // ✅ Gửi camera yaw để Host biết hướng di chuyển đúng
+        var camera = FindFirstObjectByType<ThirdPersonCamera>();
+        data.cameraYaw = (camera != null) ? camera.GetCameraYaw() : 0f;
+        
         input.Set(data);
     }
 

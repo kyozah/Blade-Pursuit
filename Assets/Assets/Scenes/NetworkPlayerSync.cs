@@ -90,7 +90,9 @@ public class NetworkPlayerSync : NetworkBehaviour
 
             if (inputDir.magnitude >= 0.1f)
             {
-                float cameraYaw = (_camera != null) ? _camera.GetCameraYaw() : transform.eulerAngles.y;
+                // ✅ Sử dụng cameraYaw từ input thay vì transform.eulerAngles.y
+                float cameraYaw = input.cameraYaw;
+
                 Vector3 camForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
                 Vector3 camRight = Quaternion.Euler(0, cameraYaw, 0) * Vector3.right;
                 Vector3 moveDir = (camForward * input.move.y + camRight * input.move.x).normalized;
