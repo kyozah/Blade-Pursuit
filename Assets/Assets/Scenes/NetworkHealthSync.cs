@@ -76,6 +76,14 @@ public class NetworkHealthSync : NetworkBehaviour
 
     public void RequestDamage(float damage, Vector3 attackerPosition)
     {
+        if (Object == null)
+        {
+            if (playerHealth == null)
+                playerHealth = GetComponent<PlayerHealth>();
+            playerHealth?.TakeDamageFromNetwork(damage, attackerPosition);
+            return;
+        }
+
         if (HasStateAuthority)
         {
             ApplyDamageAuthority(damage, attackerPosition);
@@ -103,5 +111,10 @@ public class NetworkHealthSync : NetworkBehaviour
             playerHealth.TakeDamageFromNetwork(damage, attackerPosition);
 
         NetworkedHealth = playerHealth != null ? playerHealth.GetCurrentHealth() : Mathf.Max(NetworkedHealth - damage, 0f);
+    }
+
+    public bool IsNetworkReady()
+    {
+        return Object != null;
     }
 }

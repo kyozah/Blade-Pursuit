@@ -8,6 +8,7 @@ public class EnemyNetworkSync : NetworkBehaviour
     [Networked] private Vector3 NetEuler { get; set; }
     [Networked] private float NetHealth { get; set; }
     [Networked] private NetworkBool NetDead { get; set; }
+    [Networked] private NetworkBool NetInitialized { get; set; }
 
     private Enemy _enemy;
     private Rigidbody _rb;
@@ -29,6 +30,7 @@ public class EnemyNetworkSync : NetworkBehaviour
             NetEuler = transform.eulerAngles;
             NetHealth = _enemy != null ? _enemy.GetCurrentHealth() : 0f;
             NetDead = _enemy != null && _enemy.IsDead;
+            NetInitialized = true;
             _enemy?.SetSimulationEnabled(true);
         }
         else
@@ -53,9 +55,17 @@ public class EnemyNetworkSync : NetworkBehaviour
             return;
         }
 
+        if (!NetInitialized)
+            return;
+
         transform.position = Vector3.Lerp(transform.position, NetPos, Runner.DeltaTime * 12f);
         transform.eulerAngles = NetEuler;
         _enemy?.ApplyNetworkMirrorState(NetHealth, NetDead);
+    }
+
+    public bool IsNetworkReady()
+    {
+        return Object != null;
     }
 
     public void RequestDamage(float damage, Vector3 attackerPosition, Vector3 attackerForward)

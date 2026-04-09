@@ -80,7 +80,7 @@ public class PlayerHealth : MonoBehaviour
 
     public void TakeDamage(float damage, Vector3 attackerPosition)
     {
-        if (networkHealthSync != null && !processingNetworkDamage)
+        if (networkHealthSync != null && networkHealthSync.IsNetworkReady() && !processingNetworkDamage)
         {
             networkHealthSync.RequestDamage(damage, attackerPosition);
             return;

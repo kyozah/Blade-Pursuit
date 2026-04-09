@@ -480,7 +480,7 @@ public class Enemy : MonoBehaviour
     // ✅ THÊM overload để nhận player forward direction
     public void TakeDamage(float damage, Vector3 attackerPosition, Vector3 attackerForward)
     {
-        if (networkSync != null && !suppressNetworkForward)
+        if (networkSync != null && networkSync.IsNetworkReady() && !suppressNetworkForward)
         {
             networkSync.RequestDamage(damage, attackerPosition, attackerForward);
             return;

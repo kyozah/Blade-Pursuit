@@ -41,7 +41,7 @@ public class BossHealth : MonoBehaviour
 
     public void TakeDamage(float dmg)
     {
-        if (networkSync != null)
+        if (networkSync != null && networkSync.IsNetworkReady())
         {
             networkSync.RequestDamage(dmg);
             return;

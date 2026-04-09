@@ -8,6 +8,7 @@ public class BossNetworkSync : NetworkBehaviour
     [Networked] private Vector3 NetEuler { get; set; }
     [Networked] private float NetHp { get; set; }
     [Networked] private NetworkBool NetDead { get; set; }
+    [Networked] private NetworkBool NetInitialized { get; set; }
 
     private BossBrain _brain;
     private BossHealth _health;
@@ -32,6 +33,7 @@ public class BossNetworkSync : NetworkBehaviour
                 NetHp = _health.CurrentHP;
                 NetDead = _health.CurrentHP <= 0f;
             }
+            NetInitialized = true;
             _brain?.SetSimulationEnabled(true);
         }
         else
@@ -54,9 +56,17 @@ public class BossNetworkSync : NetworkBehaviour
             return;
         }
 
+        if (!NetInitialized)
+            return;
+
         transform.position = Vector3.Lerp(transform.position, NetPos, Runner.DeltaTime * 10f);
         transform.eulerAngles = NetEuler;
         _health?.ApplyNetworkHp(NetHp, NetDead);
+    }
+
+    public bool IsNetworkReady()
+    {
+        return Object != null;
     }
 
     public void RequestDamage(float damage)

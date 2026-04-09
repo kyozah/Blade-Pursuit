@@ -345,8 +345,8 @@ public class EnemyManager : MonoBehaviour
         var netObjPrefab = prefab.GetComponent<NetworkObject>();
         if (netObjPrefab == null)
         {
-            Debug.LogError($"Enemy prefab '{prefab.name}' thiếu NetworkObject. Thêm NetworkObject + EnemyNetworkSync để đồng bộ online.");
-            return null;
+            Debug.LogWarning($"Enemy prefab '{prefab.name}' thiếu NetworkObject. Fallback spawn local.");
+            return Instantiate(prefab, spawnPos, Quaternion.identity);
         }
 
         var spawned = runner.Spawn(netObjPrefab, spawnPos, Quaternion.identity, default);
