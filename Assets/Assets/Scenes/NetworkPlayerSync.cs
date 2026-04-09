@@ -6,6 +6,11 @@ public class NetworkPlayerSync : NetworkBehaviour
     // ✅ Networked properties để đồng bộ vị trí và xoay cho tất cả players
     [Networked] public Vector3 NetworkPosition { get; set; }
     [Networked] public Vector3 NetworkRotation { get; set; }
+    [Networked] public float NetworkAnimSpeed { get; set; }
+    [Networked] public NetworkBool NetworkIsMoving { get; set; }
+    [Networked] public NetworkBool NetworkIsAttacking { get; set; }
+    [Networked] public int NetworkAttackIndex { get; set; }
+    [Networked] public NetworkBool NetworkIsRolling { get; set; }
 
     private ThirdPersonController _controller;
     private CharacterController _cc;
@@ -16,6 +21,7 @@ public class NetworkPlayerSync : NetworkBehaviour
 
     // Cache camera yaw để tính hướng di chuyển
     private ThirdPersonCamera _camera;
+    private NetworkButtons _previousButtons;
 
     void Awake()
     {
@@ -42,9 +48,14 @@ public class NetworkPlayerSync : NetworkBehaviour
             if (_attack != null)
             {
                 _attack.isNetworkControlled = true;
+                _attack.SetLocalInputEnabled(true);
                 _attack.enabled = true;
             }
-            if (_roll != null) _roll.enabled = true;
+            if (_roll != null)
+            {
+                _roll.SetLocalInputEnabled(true);
+                _roll.enabled = true;
+            }
 
             _camera = FindFirstObjectByType<ThirdPersonCamera>();
             if (_camera != null)
@@ -73,8 +84,18 @@ public class NetworkPlayerSync : NetworkBehaviour
             if (!HasStateAuthority && _cc != null)
                 _cc.enabled = false;
 
-            if (_attack != null) _attack.enabled = false;
-            if (_roll != null) _roll.enabled = false;
+            if (_attack != null)
+            {
+                _attack.isNetworkControlled = true;
+                _attack.SetLocalInputEnabled(false);
+                _attack.enabled = HasStateAuthority;
+            }
+
+            if (_roll != null)
+            {
+                _roll.SetLocalInputEnabled(false);
+                _roll.enabled = HasStateAuthority;
+            }
 
             Debug.Log("[NET] Remote player spawned: " + gameObject.name);
         }
@@ -87,6 +108,17 @@ public class NetworkPlayerSync : NetworkBehaviour
         if (GetInput(out NetworkInputData input))
         {
             Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
+            var pressed = input.buttons.GetPressed(_previousButtons);
+            _previousButtons = input.buttons;
+
+            if (HasStateAuthority)
+            {
+                if (pressed.IsSet((int)NetworkInputButtons.Attack))
+                    _attack?.TryAttackFromNetwork();
+
+                if (pressed.IsSet((int)NetworkInputButtons.Roll))
+                    _roll?.TryRollFromNetwork(input.move, input.cameraYaw);
+            }
 
             if (inputDir.magnitude >= 0.1f)
             {
@@ -120,6 +152,13 @@ public class NetworkPlayerSync : NetworkBehaviour
             }
 
             UpdateAnimationFromInput(input);
+            if (HasStateAuthority)
+                UpdateNetworkAnimationSnapshot(input);
+        }
+        else if (HasStateAuthority)
+        {
+            // Không có input mới -> đảm bảo remote vẫn thấy trạng thái idle/attack hiện tại.
+            UpdateNetworkAnimationSnapshot(default);
         }
 
         // ✅ LUÔN sync network position/rotation
@@ -144,6 +183,7 @@ public class NetworkPlayerSync : NetworkBehaviour
                 transform.position = NetworkPosition;
             }
             transform.eulerAngles = NetworkRotation;
+            ApplyNetworkAnimationSnapshot();
         }
     }
 
@@ -169,6 +209,31 @@ public class NetworkPlayerSync : NetworkBehaviour
             _controller.animator.SetFloat("Speed", speed);
             _controller.animator.SetBool("IsMoving", isMoving);
         }
+    }
+
+    private void UpdateNetworkAnimationSnapshot(NetworkInputData input)
+    {
+        Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
+        bool isMoving = inputDir.magnitude >= 0.1f;
+        float speed = isMoving ? (input.sprint ? _controller.sprintSpeed : _controller.moveSpeed) : 0f;
+
+        NetworkAnimSpeed = speed;
+        NetworkIsMoving = isMoving;
+        NetworkIsAttacking = _attack != null && _attack.IsAttacking();
+        NetworkAttackIndex = _attack != null ? _attack.GetCurrentComboIndex() : 0;
+        NetworkIsRolling = _roll != null && _roll.IsRolling();
+    }
+
+    private void ApplyNetworkAnimationSnapshot()
+    {
+        if (_controller == null || _controller.animator == null)
+            return;
+
+        _controller.animator.SetFloat("Speed", NetworkAnimSpeed);
+        _controller.animator.SetBool("IsMoving", NetworkIsMoving);
+        _controller.animator.SetBool("isAttacking", NetworkIsAttacking);
+        _controller.animator.SetInteger("attackIndex", NetworkAttackIndex);
+        _controller.animator.SetBool("isRolling", NetworkIsRolling);
     }
     
     // public override void FixedUpdateNetwork()

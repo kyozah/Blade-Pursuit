@@ -48,6 +48,7 @@ public class RollController : MonoBehaviour
     // Input System
     private PlayerInputActions inputActions;
     private Vector2 moveInput;
+    private bool allowLocalInput = true;
 
     // References to other systems
     private AttackComboController attackController;
@@ -64,8 +65,11 @@ public class RollController : MonoBehaviour
 
     void OnEnable()
     {
-        inputActions.Player.Enable();
-        inputActions.Player.Roll.performed += OnRollInput;
+        if (allowLocalInput)
+        {
+            inputActions.Player.Enable();
+            inputActions.Player.Roll.performed += OnRollInput;
+        }
     }
 
     void OnDisable()
@@ -105,6 +109,11 @@ public class RollController : MonoBehaviour
 
     void ReadInput()
     {
+        if (!allowLocalInput)
+        {
+            moveInput = Vector2.zero;
+            return;
+        }
         moveInput = inputActions.Player.Move.ReadValue<Vector2>();
     }
 
@@ -142,6 +151,54 @@ public class RollController : MonoBehaviour
 
             StartRoll();
         }
+    }
+
+    public void SetLocalInputEnabled(bool enabled)
+    {
+        if (allowLocalInput == enabled)
+            return;
+
+        allowLocalInput = enabled;
+
+        inputActions.Player.Roll.performed -= OnRollInput;
+        inputActions.Player.Disable();
+
+        if (allowLocalInput && isActiveAndEnabled)
+        {
+            inputActions.Player.Enable();
+            inputActions.Player.Roll.performed += OnRollInput;
+        }
+    }
+
+    public void TryRollFromNetwork(Vector2 networkMoveInput, float cameraYaw)
+    {
+        if (!canRoll || isRolling)
+            return;
+
+        if (attackController != null && attackController.IsAttacking()) return;
+        if (playerHealth != null && playerHealth.IsInImpact()) return;
+        if (playerHealth != null && playerHealth.IsDead()) return;
+
+        if (useStamina && !HasEnoughStamina())
+            return;
+
+        moveInput = networkMoveInput;
+
+        if (moveInput.magnitude > 0.1f)
+        {
+            Vector3 cameraForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
+            Vector3 cameraRight = Quaternion.Euler(0, cameraYaw, 0) * Vector3.right;
+            rollDirection = (cameraForward * moveInput.y + cameraRight * moveInput.x).normalized;
+        }
+        else
+        {
+            rollDirection = transform.forward;
+        }
+
+        rollDirection.y = 0;
+        rollDirection.Normalize();
+
+        StartRoll();
     }
 
     void StartRoll()

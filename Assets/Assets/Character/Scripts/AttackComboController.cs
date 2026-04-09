@@ -29,6 +29,7 @@ public class AttackComboController : MonoBehaviour
     private PlayerInputActions inputActions;
     private RollController rollController;
     private PlayerHealth playerHealth;
+    private bool allowLocalInput = true;
 
     public event Action OnAttackStart;
 
@@ -39,8 +40,11 @@ public class AttackComboController : MonoBehaviour
 
     void OnEnable()
     {
-        inputActions.Player.Enable();
-        inputActions.Player.Attack.performed += OnAttackInput;
+        if (allowLocalInput)
+        {
+            inputActions.Player.Enable();
+            inputActions.Player.Attack.performed += OnAttackInput;
+        }
     }
 
     void OnDisable()
@@ -66,6 +70,28 @@ public class AttackComboController : MonoBehaviour
     }
 
     void OnAttackInput(InputAction.CallbackContext context)
+    {
+        HandleAttackLogic();
+    }
+
+    public void SetLocalInputEnabled(bool enabled)
+    {
+        if (allowLocalInput == enabled)
+            return;
+
+        allowLocalInput = enabled;
+
+        inputActions.Player.Attack.performed -= OnAttackInput;
+        inputActions.Player.Disable();
+
+        if (allowLocalInput && isActiveAndEnabled)
+        {
+            inputActions.Player.Enable();
+            inputActions.Player.Attack.performed += OnAttackInput;
+        }
+    }
+
+    public void TryAttackFromNetwork()
     {
         HandleAttackLogic();
     }
@@ -189,4 +215,5 @@ public class AttackComboController : MonoBehaviour
     }
 
     public bool IsAttacking() => isExecutingAttack;
+    public int GetCurrentComboIndex() => currentCombo;
 }

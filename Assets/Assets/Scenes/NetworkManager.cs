@@ -134,6 +134,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         // ✅ Gửi camera yaw để Host biết hướng di chuyển đúng
         var camera = FindFirstObjectByType<ThirdPersonCamera>();
         data.cameraYaw = (camera != null) ? camera.GetCameraYaw() : 0f;
+
+        data.buttons.Set((int)NetworkInputButtons.Attack, Input.GetMouseButton(0));
+        data.buttons.Set((int)NetworkInputButtons.Roll, Input.GetKey(KeyCode.Space));
         
         input.Set(data);
     }
