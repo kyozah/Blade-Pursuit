@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Fusion;
 
 public class BossBrain : MonoBehaviour
 {
@@ -48,7 +49,12 @@ public class BossBrain : MonoBehaviour
 
     void Update()
     {
-        if (currentState == State.Dead || player == null) return;
+        if (currentState == State.Dead) return;
+
+        if (player == null)
+            player = FindBestPlayerTarget();
+
+        if (player == null) return;
 
         CheckPhase();
 
@@ -259,5 +265,34 @@ public class BossBrain : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, meleeRange);
+    }
+
+    private Transform FindBestPlayerTarget()
+    {
+        // Ưu tiên player local (input authority) để mỗi máy luôn có target hợp lệ.
+        var players = GameObject.FindGameObjectsWithTag("Player");
+        if (players == null || players.Length == 0)
+            return null;
+
+        Transform fallback = null;
+        float closestSqr = float.MaxValue;
+
+        foreach (var p in players)
+        {
+            if (p == null) continue;
+
+            var netObj = p.GetComponent<NetworkObject>();
+            if (netObj != null && netObj.HasInputAuthority)
+                return p.transform;
+
+            float sqr = (p.transform.position - transform.position).sqrMagnitude;
+            if (sqr < closestSqr)
+            {
+                closestSqr = sqr;
+                fallback = p.transform;
+            }
+        }
+
+        return fallback;
     }
 }

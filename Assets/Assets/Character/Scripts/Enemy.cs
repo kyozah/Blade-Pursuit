@@ -209,7 +209,10 @@ public class Enemy : MonoBehaviour
 
     void UpdateAI()
     {
-        if (manager == null || player == null) return;
+        if (manager == null) return;
+        if (player == null)
+            player = manager.GetPlayer();
+        if (player == null) return;
 
 
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);

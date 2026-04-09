@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Serialization;
 using System.Collections.Generic;
+using Fusion;
 
 public class EnemyManager : MonoBehaviour
 {
@@ -37,9 +38,16 @@ public class EnemyManager : MonoBehaviour
     private Transform player;
     private float lastAttackTime = -Mathf.Infinity;
     private Enemy currentAttackingEnemy = null;
+    private System.Random deterministicRng;
 
     void Start()
     {
+        int seed = gameObject.name.GetHashCode()
+            ^ Mathf.RoundToInt(transform.position.x * 100f)
+            ^ Mathf.RoundToInt(transform.position.y * 100f)
+            ^ Mathf.RoundToInt(transform.position.z * 100f);
+        deterministicRng = new System.Random(seed);
+
         // Kiểm tra Collider ngay từ đầu
         Collider col = GetComponent<Collider>();
         if (col == null)
@@ -57,7 +65,7 @@ public class EnemyManager : MonoBehaviour
         // Nếu chưa tìm thấy player, hãy thử tìm mỗi Frame cho đến khi thấy
         if (player == null)
         {
-            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            GameObject playerObj = FindPreferredPlayer();
             if (playerObj != null)
             {
                 player = playerObj.transform;
@@ -183,7 +191,7 @@ public class EnemyManager : MonoBehaviour
         foreach (var w in weights) total += w;
         if (total <= 0f) return prefabs[0];
 
-        float rnd = Random.value * total;
+        float rnd = (float)deterministicRng.NextDouble() * total;
         for (int i = 0; i < prefabs.Count; i++)
         {
             if (rnd <= weights[i]) return prefabs[i];
@@ -221,7 +229,7 @@ public class EnemyManager : MonoBehaviour
         foreach (var w in weights) total += w;
         if (total <= 0f) return prefabs[0];
 
-        float rnd = Random.value * total;
+        float rnd = (float)deterministicRng.NextDouble() * total;
         for (int i = 0; i < prefabs.Count; i++)
         {
             if (rnd <= weights[i]) return prefabs[i];
@@ -233,9 +241,39 @@ public class EnemyManager : MonoBehaviour
 
     Vector3 GetRandomSpawnPosition()
     {
-        Vector2 randomCircle = Random.insideUnitCircle * spawnRadius;
+        float angle = (float)deterministicRng.NextDouble() * Mathf.PI * 2f;
+        float radius = Mathf.Sqrt((float)deterministicRng.NextDouble()) * spawnRadius;
+        Vector2 randomCircle = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
         Vector3 spawnPos = transform.position + new Vector3(randomCircle.x, spawnHeight, randomCircle.y);
         return spawnPos;
+    }
+
+    private GameObject FindPreferredPlayer()
+    {
+        var players = GameObject.FindGameObjectsWithTag("Player");
+        if (players == null || players.Length == 0)
+            return null;
+
+        GameObject fallback = null;
+        float closestSqr = float.MaxValue;
+
+        foreach (var p in players)
+        {
+            if (p == null) continue;
+
+            var netObj = p.GetComponent<NetworkObject>();
+            if (netObj != null && netObj.HasInputAuthority)
+                return p;
+
+            float sqr = (p.transform.position - transform.position).sqrMagnitude;
+            if (sqr < closestSqr)
+            {
+                closestSqr = sqr;
+                fallback = p;
+            }
+        }
+
+        return fallback;
     }
 
     public bool CanAttack(Enemy enemy)
