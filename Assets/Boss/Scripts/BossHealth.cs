@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using Fusion;
 
 public class BossHealth : MonoBehaviour
 {
@@ -52,6 +53,14 @@ public class BossHealth : MonoBehaviour
 
     public void TakeDamageAuthority(float dmg)
     {
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner != null && !runner.IsServer && networkSync == null)
+        {
+            // Trong session online mà boss chưa gắn network sync:
+            // chỉ host mới được phép trừ máu để tránh mỗi máy tự thắng/thua khác nhau.
+            return;
+        }
+
         CurrentHP -= dmg;
         CurrentHP = Mathf.Clamp(CurrentHP, 0f, MaxHP);
         OnHealthChanged?.Invoke(CurrentHP, MaxHP);

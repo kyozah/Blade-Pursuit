@@ -1902,6 +1902,8 @@ GameObject:
   - component: {fileID: 4591106121877903335}
   - component: {fileID: 4804628476374036555}
   - component: {fileID: 2606436364681060125}
+  - component: {fileID: -4318565831423136689}
+  - component: {fileID: -4708290097019442696}
   m_Layer: 0
   m_Name: Flying beetle 1
   m_TagString: Enemy
@@ -2027,6 +2029,7 @@ MonoBehaviour:
   showDebugInfo: 1
   deathAnimationDuration: 2
   useDeathAnimationEvent: 0
+  damageStunDuration: 2
 --- !u!114 &2606436364681060125
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2047,6 +2050,37 @@ MonoBehaviour:
   useRandomPitch: 1
   pitchVariation: 0.15
   movementSoundInterval: 0.5
+--- !u!114 &-4318565831423136689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 755561605113938861}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 1485379433
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: -4708290097019442696}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &-4708290097019442696
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 755561605113938861}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3fde81fd3e2c364687baa992ff08476, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkSync
 --- !u!1 &776072000167709224
 GameObject:
   m_ObjectHideFlags: 0

@@ -92,6 +92,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8624151ff76b77c489cd541f6427435f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 677273372859230603}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8624151ff76b77c489cd541f6427435f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6042162155168369434}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8624151ff76b77c489cd541f6427435f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -1052073228925524144}
   m_SourcePrefab: {fileID: 100100000, guid: 8624151ff76b77c489cd541f6427435f, type: 3}
 --- !u!1 &6488992509232211941 stripped
 GameObject:
@@ -176,6 +182,7 @@ MonoBehaviour:
   showDebugInfo: 1
   deathAnimationDuration: 2
   useDeathAnimationEvent: 0
+  damageStunDuration: 2
 --- !u!114 &677273372859230603
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -196,3 +203,34 @@ MonoBehaviour:
   useRandomPitch: 1
   pitchVariation: 0.15
   movementSoundInterval: 0.5
+--- !u!114 &6042162155168369434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6488992509232211941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2783154046
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: -1052073228925524144}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &-1052073228925524144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6488992509232211941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3fde81fd3e2c364687baa992ff08476, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkSync

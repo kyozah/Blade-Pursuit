@@ -11414,6 +11414,8 @@ GameObject:
   - component: {fileID: 7527697362655190301}
   - component: {fileID: 1370078167521147250}
   - component: {fileID: -4514430412592180376}
+  - component: {fileID: -3971152891831085174}
+  - component: {fileID: 2792794317705457252}
   m_Layer: 0
   m_Name: ork berserk prefab
   m_TagString: Enemy
@@ -11563,6 +11565,37 @@ MonoBehaviour:
   useRandomPitch: 1
   pitchVariation: 0.15
   movementSoundInterval: 0.5
+--- !u!114 &-3971152891831085174
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5783773701163634531}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 715794284
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 2792794317705457252}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &2792794317705457252
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5783773701163634531}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3fde81fd3e2c364687baa992ff08476, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkSync
 --- !u!1 &5796257444759742637
 GameObject:
   m_ObjectHideFlags: 0

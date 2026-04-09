@@ -77,9 +77,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponHitbox
   damage: 20
+  knockbackForce: 10
+  knockbackUpwardForce: 2
   activationDelay: 0.05
-  pushOverlappingEnemies: 1
-  pushForce: 12
+  enemyTag: Enemy
+  bossTag: Boss
 --- !u!65 &976118156869205454
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -858,6 +860,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 175bbe0840dc77f4394720b2a2f81351, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6215095376276093387}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 175bbe0840dc77f4394720b2a2f81351, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -4635732445452530369}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 175bbe0840dc77f4394720b2a2f81351, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -6325038189799244431}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 175bbe0840dc77f4394720b2a2f81351, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8090170708980400435}
   m_SourcePrefab: {fileID: 100100000, guid: 175bbe0840dc77f4394720b2a2f81351, type: 3}
 --- !u!4 &7529752754377448209 stripped
 Transform:
@@ -889,6 +900,7 @@ MonoBehaviour:
   weaponHitbox: {fileID: 4613209961708812862}
   dashDistance: 5.25
   dashDuration: 0.2
+  isNetworkControlled: 0
 --- !u!114 &9191265260089336539
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -913,6 +925,7 @@ MonoBehaviour:
     m_Bits: 0
   cameraController: {fileID: 0}
   animator: {fileID: 1912744087703794973}
+  isNetworkControlled: 0
 --- !u!95 &1912744087703794973
 Animator:
   serializedVersion: 7
@@ -1071,3 +1084,60 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &-4635732445452530369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9010518851980958088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 3187989177
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: -6325038189799244431}
+  - {fileID: 8090170708980400435}
+  ForceRemoteRenderTimeframe: 0
+--- !u!114 &-6325038189799244431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9010518851980958088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aea6023aeb5575e458d2916cc9c37168, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerSync
+  _NetworkPosition: {x: 0, y: 0, z: 0}
+  _NetworkRotation: {x: 0, y: 0, z: 0}
+  _NetworkAnimSpeed: 0
+  _NetworkIsMoving:
+    _value: 0
+  _NetworkIsAttacking:
+    _value: 0
+  _NetworkAttackIndex: 0
+  _NetworkIsRolling:
+    _value: 0
+--- !u!114 &8090170708980400435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9010518851980958088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cb1c0f81302c78469354bb2b7f031ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkHealthSync
+  maxHealth: 100
+  _NetworkedHealth: 0
+  overheadHealthBar: {fileID: 0}

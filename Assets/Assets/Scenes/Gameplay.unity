@@ -91669,7 +91669,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7469277342696742021, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
   m_PrefabInstance: {fileID: 12536385140453312}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1804503081}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b3a571065b5db5e47b8ccf4611195e15, type: 3}
@@ -93077,6 +93077,8 @@ GameObject:
   - component: {fileID: 1129662399}
   - component: {fileID: 1129662398}
   - component: {fileID: 1129662397}
+  - component: {fileID: 1129662404}
+  - component: {fileID: 1129662403}
   m_Layer: 0
   m_Name: BossLord
   m_TagString: Boss
@@ -93219,6 +93221,37 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 80
   m_CollisionDetection: 0
+--- !u!114 &1129662403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1129662394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a45c2b62118b41b47a9df56d177ecee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossNetworkSync
+--- !u!114 &1129662404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1129662394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2640253050
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 1129662403}
+  ForceRemoteRenderTimeframe: 0
 --- !u!4 &1130180108 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 72a14b3173db4ce4384c7ea5c0bc2b68, type: 3}
@@ -145816,6 +145849,42 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0e5ee307eaf0cf540b2035b0f158ee24, type: 3}
+--- !u!1 &1804503081 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1035027249598923116, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
+  m_PrefabInstance: {fileID: 12536385140453312}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1804503087
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1804503081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a45c2b62118b41b47a9df56d177ecee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossNetworkSync
+--- !u!114 &1804503088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1804503081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 2493230750
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 1804503087}
+  ForceRemoteRenderTimeframe: 0
 --- !u!1 &1806832420
 GameObject:
   m_ObjectHideFlags: 0
@@ -170616,7 +170685,13 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3891277633901163051, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 111888223}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1035027249598923116, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1804503088}
+    - targetCorrespondingSourceObject: {fileID: 1035027249598923116, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1804503087}
   m_SourcePrefab: {fileID: 100100000, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
 --- !u!1001 &1926721163034789085
 PrefabInstance:
