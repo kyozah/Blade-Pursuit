@@ -84,10 +84,6 @@ public class NetworkPlayerSync : NetworkBehaviour
     {
         if (_cc == null) return;
 
-        // ✅ Cách tiếp cận: Client-side prediction
-        // Mỗi máy di chuyển nhân vật của chính nó dựa trên local input
-        // Sau đó sync vị trí qua network
-        
         if (GetInput(out NetworkInputData input))
         {
             Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
@@ -101,21 +97,26 @@ public class NetworkPlayerSync : NetworkBehaviour
 
                 float speed = input.sprint ? _controller.sprintSpeed : _controller.moveSpeed;
                 
-                // ✅ Cả Input Authority và State Authority đều được di chuyển
-                _cc.Move(moveDir * speed * Runner.DeltaTime);
-
-                if (moveDir != Vector3.zero)
+                // ✅ CHỈ HasStateAuthority (Host) di chuyển player
+                // Điều này tránh di chuyển 2 lần (host + client)
+                if (HasStateAuthority)
                 {
-                    transform.rotation = Quaternion.Slerp(
-                        transform.rotation,
-                        Quaternion.LookRotation(moveDir),
-                        _controller.rotationSpeed * Runner.DeltaTime
-                    );
+                    _cc.Move(moveDir * speed * Runner.DeltaTime);
+
+                    if (moveDir != Vector3.zero)
+                    {
+                        transform.rotation = Quaternion.Slerp(
+                            transform.rotation,
+                            Quaternion.LookRotation(moveDir),
+                            _controller.rotationSpeed * Runner.DeltaTime
+                        );
+                    }
+
+                    // Gravity chỉ host
+                    _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime);
                 }
             }
 
-            // Gravity cho tất cả
-            _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime);
             UpdateAnimationFromInput(input);
         }
 
