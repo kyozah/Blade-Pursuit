@@ -73,53 +73,55 @@ public class NetworkPlayerSync : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        // BỎ DÒNG: if (!HasInputAuthority) return; 
-        // Vì cả Server (State Authority) và Client (Input Authority) đều cần chạy code này.
-
         if (_cc == null) return;
 
-        // GetInput sẽ trả về True nếu:
-        // 1. Đây là máy Client đang điều khiển nhân vật này (Input Authority)
-        // 2. Đây là máy Server đang nhận Input từ Client đó (State Authority)
-        if (GetInput(out NetworkInputData input))
+        // ✅ CHỈ HAS INPUT AUTHORITY mới được di chuyển qua CharacterController
+        // Remote players chỉ nhìn position được sync qua network
+        if (HasInputAuthority)
         {
-            // ... (Giữ nguyên logic kiểm tra Attack, Rolling, Impact...)
-
-            Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
-
-            if (inputDir.magnitude >= 0.1f)
+            // GetInput sẽ trả về True nếu:
+            // 1. Đây là máy Client đang điều khiển nhân vật này (Input Authority)
+            // 2. Đây là máy Server đang nhận Input từ Client đó (State Authority)
+            if (GetInput(out NetworkInputData input))
             {
-                // LƯU Ý: Ở Server, _camera sẽ là null, nên đoạn cameraYaw cần xử lý an toàn
-                float cameraYaw = (_camera != null) ? _camera.GetCameraYaw() : transform.eulerAngles.y;
+                // ... (Giữ nguyên logic kiểm tra Attack, Rolling, Impact...)
 
-                Vector3 camForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
-                Vector3 camRight = Quaternion.Euler(0, cameraYaw, 0) * Vector3.right;
-                Vector3 moveDir = (camForward * input.move.y + camRight * input.move.x).normalized;
+                Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
 
-                float speed = input.sprint ? _controller.sprintSpeed : _controller.moveSpeed;
-
-                // Di chuyển CharacterController (Chạy trên cả 2 phía)
-                _cc.Move(moveDir * speed * Runner.DeltaTime);
-
-                if (moveDir != Vector3.zero)
+                if (inputDir.magnitude >= 0.1f)
                 {
-                    transform.rotation = Quaternion.Slerp(
-                        transform.rotation,
-                        Quaternion.LookRotation(moveDir),
-                        _controller.rotationSpeed * Runner.DeltaTime
-                    );
-                }
-                
-                // Animator chỉ nên chạy trên máy có quyền hiển thị (thường là tất cả hoặc Proxy)
-                UpdateAnimation(speed, true);
-            }
-            else
-            {
-                UpdateAnimation(0, false);
-            }
+                    // LƯU Ý: Ở Server, _camera sẽ là null, nên đoạn cameraYaw cần xử lý an toàn
+                    float cameraYaw = (_camera != null) ? _camera.GetCameraYaw() : transform.eulerAngles.y;
 
-            // Gravity - Quan trọng: Phải chạy trên cả Server để vị trí Y đồng bộ
-            _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime);
+                    Vector3 camForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
+                    Vector3 camRight = Quaternion.Euler(0, cameraYaw, 0) * Vector3.right;
+                    Vector3 moveDir = (camForward * input.move.y + camRight * input.move.x).normalized;
+
+                    float speed = input.sprint ? _controller.sprintSpeed : _controller.moveSpeed;
+
+                    // Di chuyển CharacterController (Chạy trên cả 2 phía)
+                    _cc.Move(moveDir * speed * Runner.DeltaTime);
+
+                    if (moveDir != Vector3.zero)
+                    {
+                        transform.rotation = Quaternion.Slerp(
+                            transform.rotation,
+                            Quaternion.LookRotation(moveDir),
+                            _controller.rotationSpeed * Runner.DeltaTime
+                        );
+                    }
+                    
+                    // Animator chỉ nên chạy trên máy có quyền hiển thị (thường là tất cả hoặc Proxy)
+                    UpdateAnimation(speed, true);
+                }
+                else
+                {
+                    UpdateAnimation(0, false);
+                }
+
+                // Gravity - Quan trọng: Phải chạy trên cả Server để vị trí Y đồng bộ
+                _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime);
+            }
         }
     }
 
