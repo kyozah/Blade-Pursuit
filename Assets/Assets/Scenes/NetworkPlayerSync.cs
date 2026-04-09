@@ -83,45 +83,54 @@ public class NetworkPlayerSync : NetworkBehaviour
     {
         if (_cc == null) return;
 
-        if (GetInput(out NetworkInputData input))
+        // ✅ CHỈ SERVER (State Authority) mới xử lý di chuyển physics
+        // Điều này tránh di chuyển được tính 2 lần (client + server)
+        if (HasStateAuthority)
         {
-            // ... (Giữ nguyên logic kiểm tra Attack, Rolling, Impact...)
-
-            Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
-
-            if (inputDir.magnitude >= 0.1f)
+            if (GetInput(out NetworkInputData input))
             {
-                // LƯU Ý: Ở Server, _camera sẽ là null, nên đoạn cameraYaw cần xử lý an toàn
-                float cameraYaw = (_camera != null) ? _camera.GetCameraYaw() : transform.eulerAngles.y;
+                // ... (Giữ nguyên logic kiểm tra Attack, Rolling, Impact...)
 
-                Vector3 camForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
-                Vector3 camRight = Quaternion.Euler(0, cameraYaw, 0) * Vector3.right;
-                Vector3 moveDir = (camForward * input.move.y + camRight * input.move.x).normalized;
+                Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
 
-                float speed = input.sprint ? _controller.sprintSpeed : _controller.moveSpeed;
-
-                // Di chuyển CharacterController (Chạy trên cả 2 phía)
-                _cc.Move(moveDir * speed * Runner.DeltaTime);
-
-                if (moveDir != Vector3.zero)
+                if (inputDir.magnitude >= 0.1f)
                 {
-                    transform.rotation = Quaternion.Slerp(
-                        transform.rotation,
-                        Quaternion.LookRotation(moveDir),
-                        _controller.rotationSpeed * Runner.DeltaTime
-                    );
-                }
-                
-                // Animator chỉ nên chạy trên máy có quyền hiển thị (thường là tất cả hoặc Proxy)
-                UpdateAnimation(speed, true);
-            }
-            else
-            {
-                UpdateAnimation(0, false);
-            }
+                    // LƯU Ý: Ở Server, _camera sẽ là null, nên đoạn cameraYaw cần xử lý an toàn
+                    float cameraYaw = (_camera != null) ? _camera.GetCameraYaw() : transform.eulerAngles.y;
 
-            // Gravity - Quan trọng: Phải chạy trên cả Server để vị trí Y đồng bộ
-            _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime);
+                    Vector3 camForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
+                    Vector3 camRight = Quaternion.Euler(0, cameraYaw, 0) * Vector3.right;
+                    Vector3 moveDir = (camForward * input.move.y + camRight * input.move.x).normalized;
+
+                    float speed = input.sprint ? _controller.sprintSpeed : _controller.moveSpeed;
+
+                    // Di chuyển CharacterController (CHỈ trên Server)
+                    _cc.Move(moveDir * speed * Runner.DeltaTime);
+
+                    if (moveDir != Vector3.zero)
+                    {
+                        transform.rotation = Quaternion.Slerp(
+                            transform.rotation,
+                            Quaternion.LookRotation(moveDir),
+                            _controller.rotationSpeed * Runner.DeltaTime
+                        );
+                    }
+                }
+
+                // Gravity - Chỉ chạy trên Server
+                _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime);
+
+                // ✅ Update animation dựa trên input
+                UpdateAnimationFromInput(input);
+            }
+        }
+        else if (HasInputAuthority)
+        {
+            // ✅ Local player (Input Authority): Chỉ chạy animation, không di chuyển
+            if (GetInput(out NetworkInputData input))
+            {
+                UpdateAnimationFromInput(input);
+            }
         }
 
         // ✅ LUÔN cập nhật network position/rotation cho TẤT CẢ players (kể cả proxy)
@@ -134,11 +143,35 @@ public class NetworkPlayerSync : NetworkBehaviour
     void Update()
     {
         // Nếu không phải input authority (tức là player của remote)
-        // Thì cập nhật position từ network value
-        if (!HasInputAuthority && NetworkPosition != Vector3.zero)
+        // Thì cập nhật position/rotation từ network value
+        if (!HasInputAuthority)
         {
-            transform.position = Vector3.Lerp(transform.position, NetworkPosition, 0.1f);
+            // Lerp smooth để tránh teleport
+            if (Vector3.Distance(transform.position, NetworkPosition) > 0.01f)
+            {
+                transform.position = Vector3.Lerp(transform.position, NetworkPosition, Time.deltaTime * 5f);
+            }
+            else
+            {
+                transform.position = NetworkPosition;
+            }
             transform.eulerAngles = NetworkRotation;
+        }
+    }
+
+    // ✅ Chạy animation dựa trên input (cho cả local và remote)
+    public void UpdateAnimationFromInput(NetworkInputData input)
+    {
+        Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
+        
+        if (inputDir.magnitude >= 0.1f)
+        {
+            float speed = input.sprint ? _controller.sprintSpeed : _controller.moveSpeed;
+            UpdateAnimation(speed, true);
+        }
+        else
+        {
+            UpdateAnimation(0, false);
         }
     }
 
