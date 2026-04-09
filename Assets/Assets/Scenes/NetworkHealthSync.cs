@@ -38,12 +38,17 @@ public class NetworkHealthSync : NetworkBehaviour
         }
 
         // Cập nhật hiển thị ngay lập tức khi vừa xuất hiện
+        playerHealth?.ApplyAuthoritativeHealth(NetworkedHealth);
         UpdateAllBars();
     }
 
     // Hàm này được Fusion gọi tự động khi NetworkedHealth thay đổi dữ liệu từ server
     void OnHealthChanged()
     {
+        if (playerHealth == null)
+            playerHealth = GetComponent<PlayerHealth>();
+
+        playerHealth?.ApplyAuthoritativeHealth(NetworkedHealth);
         UpdateAllBars();
     }
 

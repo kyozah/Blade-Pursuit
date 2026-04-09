@@ -419,4 +419,37 @@ public class PlayerHealth : MonoBehaviour
             processingNetworkDamage = false;
         }
     }
+
+    public void ApplyAuthoritativeHealth(float authoritativeHealth)
+    {
+        authoritativeHealth = Mathf.Clamp(authoritativeHealth, 0f, maxHealth);
+
+        // Không làm gì nếu đã đồng bộ sẵn.
+        if (Mathf.Approximately(currentHealth, authoritativeHealth))
+            return;
+
+        currentHealth = authoritativeHealth;
+
+        // Đồng bộ trạng thái chết/sống theo dữ liệu authority.
+        if (currentHealth <= 0f)
+        {
+            if (!isDead)
+                Die();
+        }
+        else if (isDead)
+        {
+            // Trường hợp authority đã hồi sinh.
+            isDead = false;
+            isInImpact = false;
+
+            if (movementController != null) movementController.enabled = true;
+            if (attackController != null) attackController.enabled = true;
+            if (rollController != null) rollController.enabled = true;
+            if (animator != null)
+            {
+                animator.Rebind();
+                animator.Update(0f);
+            }
+        }
+    }
 }
