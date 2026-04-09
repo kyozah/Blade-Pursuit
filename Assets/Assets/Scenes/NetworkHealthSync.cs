@@ -15,13 +15,16 @@ public class NetworkHealthSync : NetworkBehaviour
 
     // Tham chiếu UI góc trái (Main HUD)
     private PlayerHealthBar screenHealthBar;
+    private PlayerHealth playerHealth;
 
     public override void Spawned()
     {
+        playerHealth = GetComponent<PlayerHealth>();
+
         // Kiểm tra nếu là Server (Host) thì thiết lập máu đầy ban đầu
         if (HasStateAuthority)
         {
-            NetworkedHealth = maxHealth;
+            NetworkedHealth = playerHealth != null ? playerHealth.GetCurrentHealth() : maxHealth;
         }
 
         // Nếu là nhân vật của chính mình (Input Authority), đi tìm thanh máu góc trái
@@ -69,5 +72,36 @@ public class NetworkHealthSync : NetworkBehaviour
             
             Debug.Log($"[HEALTH] Máu hiện tại: {NetworkedHealth}");
         }
+    }
+
+    public void RequestDamage(float damage, Vector3 attackerPosition)
+    {
+        if (HasStateAuthority)
+        {
+            ApplyDamageAuthority(damage, attackerPosition);
+            return;
+        }
+
+        RpcRequestDamage(damage, attackerPosition);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RpcRequestDamage(float damage, Vector3 attackerPosition)
+    {
+        ApplyDamageAuthority(damage, attackerPosition);
+    }
+
+    private void ApplyDamageAuthority(float damage, Vector3 attackerPosition)
+    {
+        if (!HasStateAuthority)
+            return;
+
+        if (playerHealth == null)
+            playerHealth = GetComponent<PlayerHealth>();
+
+        if (playerHealth != null)
+            playerHealth.TakeDamageFromNetwork(damage, attackerPosition);
+
+        NetworkedHealth = playerHealth != null ? playerHealth.GetCurrentHealth() : Mathf.Max(NetworkedHealth - damage, 0f);
     }
 }

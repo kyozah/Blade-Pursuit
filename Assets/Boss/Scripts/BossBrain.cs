@@ -275,20 +275,24 @@ public class BossBrain : MonoBehaviour
             return null;
 
         Transform fallback = null;
-        float closestSqr = float.MaxValue;
+        int bestAuthorityId = int.MaxValue;
 
         foreach (var p in players)
         {
             if (p == null) continue;
 
             var netObj = p.GetComponent<NetworkObject>();
-            if (netObj != null && netObj.HasInputAuthority)
-                return p.transform;
-
-            float sqr = (p.transform.position - transform.position).sqrMagnitude;
-            if (sqr < closestSqr)
+            if (netObj != null)
             {
-                closestSqr = sqr;
+                int id = netObj.InputAuthority.PlayerId;
+                if (id < bestAuthorityId)
+                {
+                    bestAuthorityId = id;
+                    fallback = p.transform;
+                }
+            }
+            else if (fallback == null)
+            {
                 fallback = p.transform;
             }
         }

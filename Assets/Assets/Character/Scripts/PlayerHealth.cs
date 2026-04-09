@@ -53,6 +53,8 @@ public class PlayerHealth : MonoBehaviour
     private AttackComboController attackController;
     private RollController rollController;
     private PlayerAudioSystem audioSystem;
+    private NetworkHealthSync networkHealthSync;
+    private bool processingNetworkDamage;
 
     public float NetworkedHealth { get; internal set; }
 
@@ -71,12 +73,19 @@ public class PlayerHealth : MonoBehaviour
         attackController = GetComponent<AttackComboController>();
         rollController = GetComponent<RollController>();
         audioSystem = GetComponent<PlayerAudioSystem>();
+        networkHealthSync = GetComponent<NetworkHealthSync>();
 
         Debug.Log($"✅ PlayerHealth initialized. Max HP: {maxHealth}");
     }
 
     public void TakeDamage(float damage, Vector3 attackerPosition)
     {
+        if (networkHealthSync != null && !processingNetworkDamage)
+        {
+            networkHealthSync.RequestDamage(damage, attackerPosition);
+            return;
+        }
+
         // Check nếu đã chết hoặc đang bất tử
         if (isDead || isInvincible)
         {
@@ -392,6 +401,22 @@ public class PlayerHealth : MonoBehaviour
         else
         {
             gameObject.layer = originalLayer;
+        }
+    }
+
+    public void TakeDamageFromNetwork(float damage, Vector3 attackerPosition)
+    {
+        if (processingNetworkDamage)
+            return;
+
+        processingNetworkDamage = true;
+        try
+        {
+            TakeDamage(damage, attackerPosition);
+        }
+        finally
+        {
+            processingNetworkDamage = false;
         }
     }
 }
