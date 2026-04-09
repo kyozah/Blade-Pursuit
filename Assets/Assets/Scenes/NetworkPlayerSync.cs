@@ -1,9 +1,10 @@
 using Fusion;
 using UnityEngine;
+using TMPro;
 
 public class NetworkPlayerSync : NetworkBehaviour
 {
-    // ✅ Networked properties để đồng bộ vị trí và xoay cho tất cả players
+    // Networked properties để đồng bộ
     [Networked] public Vector3 NetworkPosition { get; set; }
     [Networked] public Vector3 NetworkRotation { get; set; }
     [Networked] public float NetworkAnimSpeed { get; set; }
@@ -11,15 +12,18 @@ public class NetworkPlayerSync : NetworkBehaviour
     [Networked] public NetworkBool NetworkIsAttacking { get; set; }
     [Networked] public int NetworkAttackIndex { get; set; }
     [Networked] public NetworkBool NetworkIsRolling { get; set; }
+    
+    // Tên người chơi đồng bộ qua mạng
+    [Networked] public NetworkString<_16> NetworkPlayerName { get; set; }
 
+    // Components
     private ThirdPersonController _controller;
     private CharacterController _cc;
     private PlayerHealth _health;
     private AttackComboController _attack;
     private RollController _roll;
     private LobbyUI _lobbyUI;
-
-    // Cache camera yaw để tính hướng di chuyển
+    private PlayerNameTag _nameTag;
     private ThirdPersonCamera _camera;
     private NetworkButtons _previousButtons;
 
@@ -32,15 +36,34 @@ public class NetworkPlayerSync : NetworkBehaviour
 
     public override void Spawned()
     {
+        Debug.Log($"[NetworkPlayerSync] Spawned - HasInputAuthority: {HasInputAuthority}, HasStateAuthority: {HasStateAuthority}");
+        
+        // Lấy các components
         _controller = GetComponent<ThirdPersonController>();
         _cc = GetComponent<CharacterController>();
         _health = GetComponent<PlayerHealth>();
         _attack = GetComponent<AttackComboController>();
         _roll = GetComponent<RollController>();
         _lobbyUI = FindFirstObjectByType<LobbyUI>();
+        
+        // ✅ LẤY NAME TAG TỪ PREFAB (đã được tạo bằng tay)
+        _nameTag = GetComponentInChildren<PlayerNameTag>();
+        
+        if (_nameTag == null)
+        {
+            Debug.LogError("[NetworkPlayerSync] PlayerNameTag not found in prefab! Please add it manually.");
+        }
+        else
+        {
+            Debug.Log("[NetworkPlayerSync] PlayerNameTag found in prefab");
+            _nameTag.followTarget = transform;
+        }
 
+        // ===== LOCAL PLAYER (Input Authority) =====
         if (HasInputAuthority)
         {
+            Debug.Log("[NetworkPlayerSync] Setting up LOCAL player");
+            
             _controller.isNetworkControlled = true;
             _controller.enabled = false;
             _controller.EnableInput();
@@ -51,16 +74,19 @@ public class NetworkPlayerSync : NetworkBehaviour
                 _attack.SetLocalInputEnabled(true);
                 _attack.enabled = true;
             }
+            
             if (_roll != null)
             {
                 _roll.SetLocalInputEnabled(true);
                 _roll.enabled = true;
             }
 
+            // Gán camera cho local player
             _camera = FindFirstObjectByType<ThirdPersonCamera>();
             if (_camera != null)
                 _camera.SetTarget(transform);
 
+            // Gán health bar cho local player
             GameObject hud = GameObject.FindGameObjectWithTag("MainHealthBar");
             if (hud != null)
             {
@@ -68,19 +94,55 @@ public class NetworkPlayerSync : NetworkBehaviour
                 if (healthBar != null)
                     healthBar.SetTarget(_health);
             }
+            
+            // LẤY TÊN TỪ NETWORK MANAGER VÀ ĐỒNG BỘ
+            var networkManager = FindFirstObjectByType<NetworkManager>();
+            if (networkManager != null)
+            {
+                string playerName = networkManager.GetLocalPlayerName();
+                if (string.IsNullOrEmpty(playerName))
+                {
+                    playerName = PlayerPrefs.GetString("PlayerName", "Player");
+                }
+                
+                Debug.Log($"[NetworkPlayerSync] Local player name: {playerName}");
+                NetworkPlayerName = playerName;
+                
+                if (_nameTag != null)
+                {
+                    _nameTag.SetPlayerName(playerName);
+                    Debug.Log($"[NetworkPlayerSync] Set name tag to: {playerName}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[NetworkPlayerSync] NetworkManager not found!");
+            }
+            
+            // ĐĂNG KÝ TÊN VỚI CHAT MANAGER
+            var runner = Runner;
+            if (runner != null && runner.LocalPlayer != null)
+            {
+                var chatManager = FindFirstObjectByType<NetworkChatManager>();
+                if (chatManager != null && !string.IsNullOrEmpty(NetworkPlayerName.ToString()))
+                {
+                    chatManager.RegisterPlayerName(runner.LocalPlayer, NetworkPlayerName.ToString());
+                    Debug.Log($"[NetworkPlayerSync] Registered name with ChatManager: {NetworkPlayerName}");
+                }
+            }
 
-            Debug.Log("[NET] Local player spawned: " + gameObject.name);
-
-            // Chỉ Host mới có quyền ẩn lobby, nên gọi RPC từ đây là hợp lý
+            Debug.Log("[NetworkPlayerSync] Local player setup complete");
         }
+        
+        // ===== REMOTE PLAYER =====
         else
         {
+            Debug.Log("[NetworkPlayerSync] Setting up REMOTE player");
+            
             _controller.isNetworkControlled = true;
             _controller.enabled = false;
             _controller.DisableInput();
 
-            // ✅ Chỉ disable CharacterController cho proxy players (không phải Server)
-            // Server vẫn cần CharacterController để di chuyển player này
             if (!HasStateAuthority && _cc != null)
                 _cc.enabled = false;
 
@@ -97,7 +159,23 @@ public class NetworkPlayerSync : NetworkBehaviour
                 _roll.enabled = HasStateAuthority;
             }
 
-            Debug.Log("[NET] Remote player spawned: " + gameObject.name);
+            Debug.Log("[NetworkPlayerSync] Remote player setup complete");
+        }
+    }
+    
+    // CẬP NHẬT TÊN CHO REMOTE PLAYER
+    public override void Render()
+    {
+        if (!HasInputAuthority && _nameTag != null && !string.IsNullOrEmpty(NetworkPlayerName.ToString()))
+        {
+            string networkName = NetworkPlayerName.ToString();
+            string currentName = _nameTag.GetPlayerName();
+            
+            if (currentName != networkName)
+            {
+                _nameTag.SetPlayerName(networkName);
+                Debug.Log($"[NetworkPlayerSync] Updated remote player name to: {networkName}");
+            }
         }
     }
 
@@ -122,7 +200,6 @@ public class NetworkPlayerSync : NetworkBehaviour
 
             if (inputDir.magnitude >= 0.1f)
             {
-                // ✅ Sử dụng cameraYaw từ input thay vì transform.eulerAngles.y
                 float cameraYaw = input.cameraYaw;
 
                 Vector3 camForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
@@ -131,8 +208,6 @@ public class NetworkPlayerSync : NetworkBehaviour
 
                 float speed = input.sprint ? _controller.sprintSpeed : _controller.moveSpeed;
                 
-                // ✅ CHỈ HasStateAuthority (Host) di chuyển player
-                // Điều này tránh di chuyển 2 lần (host + client)
                 if (HasStateAuthority)
                 {
                     _cc.Move(moveDir * speed * Runner.DeltaTime);
@@ -146,34 +221,28 @@ public class NetworkPlayerSync : NetworkBehaviour
                         );
                     }
 
-                    // Gravity chỉ host
                     _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime);
                 }
             }
 
             UpdateAnimationFromInput(input);
+            
             if (HasStateAuthority)
                 UpdateNetworkAnimationSnapshot(input);
         }
         else if (HasStateAuthority)
         {
-            // Không có input mới -> đảm bảo remote vẫn thấy trạng thái idle/attack hiện tại.
             UpdateNetworkAnimationSnapshot(default);
         }
 
-        // ✅ LUÔN sync network position/rotation
         NetworkPosition = transform.position;
         NetworkRotation = transform.eulerAngles;
     }
 
-    // ✅ Áp dụng network position/rotation cho remote players mỗi frame
     void Update()
     {
-        // Nếu không phải input authority (tức là player của remote)
-        // Thì cập nhật position/rotation từ network value
         if (!HasInputAuthority)
         {
-            // Lerp smooth để tránh teleport
             if (Vector3.Distance(transform.position, NetworkPosition) > 0.01f)
             {
                 transform.position = Vector3.Lerp(transform.position, NetworkPosition, Time.deltaTime * 5f);
@@ -187,7 +256,6 @@ public class NetworkPlayerSync : NetworkBehaviour
         }
     }
 
-    // ✅ Chạy animation dựa trên input (cho cả local và remote)
     public void UpdateAnimationFromInput(NetworkInputData input)
     {
         Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
@@ -203,9 +271,10 @@ public class NetworkPlayerSync : NetworkBehaviour
         }
     }
 
-    // Tách hàm Animator để code sạch hơn
-    private void UpdateAnimation(float speed, bool isMoving) {
-        if (_controller.animator != null) {
+    private void UpdateAnimation(float speed, bool isMoving) 
+    {
+        if (_controller.animator != null) 
+        {
             _controller.animator.SetFloat("Speed", speed);
             _controller.animator.SetBool("IsMoving", isMoving);
         }
@@ -235,82 +304,11 @@ public class NetworkPlayerSync : NetworkBehaviour
         _controller.animator.SetInteger("attackIndex", NetworkAttackIndex);
         _controller.animator.SetBool("isRolling", NetworkIsRolling);
     }
-    
-    // public override void FixedUpdateNetwork()
-    // {
-    //     if (!HasInputAuthority) return;
-    //     if (_cc == null) return;
-
-    //     if (GetInput(out NetworkInputData input))
-    //     {
-    //         bool isAttacking = _attack != null && _attack.IsAttacking();
-    //         bool isRolling = _roll != null && _roll.IsRolling();
-    //         bool isInImpact = _health != null && _health.IsInImpact();
-    //         bool isDead = _health != null && _health.IsDead();
-
-    //         Animator animator = _controller.animator;
-
-    //         if (isAttacking || isRolling || isInImpact || isDead)
-    //         {
-    //             if (animator != null)
-    //             {
-    //                 animator.SetFloat("Speed", 0);
-    //                 animator.SetBool("IsMoving", false);
-    //             }
-    //             return;
-    //         }
-
-    //         Vector3 inputDir = new Vector3(input.move.x, 0, input.move.y).normalized;
-
-    //         if (inputDir.magnitude >= 0.1f)
-    //         {
-    //             float cameraYaw = _camera != null
-    //                 ? _camera.GetCameraYaw()
-    //                 : transform.eulerAngles.y;
-
-    //             Vector3 camForward = Quaternion.Euler(0, cameraYaw, 0) * Vector3.forward;
-    //             Vector3 camRight = Quaternion.Euler(0, cameraYaw, 0) * Vector3.right;
-    //             Vector3 moveDir = (camForward * input.move.y + camRight * input.move.x).normalized;
-
-    //             float speed = input.sprint ? _controller.sprintSpeed : _controller.moveSpeed;
-
-    //             // ✅ Gọi trực tiếp CharacterController.Move()
-    //             _cc.Move(moveDir * speed * Runner.DeltaTime);
-
-    //             // Xoay nhân vật
-    //             if (moveDir != Vector3.zero)
-    //             {
-    //                 transform.rotation = Quaternion.Slerp(
-    //                     transform.rotation,
-    //                     Quaternion.LookRotation(moveDir),
-    //                     _controller.rotationSpeed * Runner.DeltaTime
-    //                 );
-    //             }
-
-    //             if (animator != null)
-    //             {
-    //                 animator.SetFloat("Speed", speed);
-    //                 animator.SetBool("IsMoving", true);
-    //             }
-    //         }
-    //         else
-    //         {
-    //             if (animator != null)
-    //             {
-    //                 animator.SetFloat("Speed", 0);
-    //                 animator.SetBool("IsMoving", false);
-    //             }
-    //         }
-
-    //         // Gravity
-    //         _cc.Move(Vector3.down * 9.81f * Runner.DeltaTime * Runner.DeltaTime);
-    //     }
-    // }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RpcHideLobbyOnClients()
     {
-        Debug.Log("[NET] RPC HideLobby nhận được!");
+        Debug.Log("[NET] RPC HideLobby received!");
         if (_lobbyUI == null)
             _lobbyUI = FindFirstObjectByType<LobbyUI>();
         _lobbyUI?.HideLobby();

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Fusion;
 
 public class WeaponHitbox : MonoBehaviour
 {
@@ -29,7 +30,6 @@ public class WeaponHitbox : MonoBehaviour
     {
         if (!canDealDamage || boxCollider == null) return;
 
-        // ✅ Scan mỗi frame — không phụ thuộc OnTriggerEnter
         Collider[] hits = Physics.OverlapBox(
             boxCollider.bounds.center,
             boxCollider.bounds.extents,
@@ -55,7 +55,11 @@ public class WeaponHitbox : MonoBehaviour
 
         if (enemy != null)
         {
-            enemy.TakeDamage(damage, transform.root.position, transform.root.forward);
+            // Lấy hướng player đang nhìn để knockback
+            Vector3 attackerForward = transform.root.forward;
+            
+            // Gọi TakeDamage - bên trong Enemy sẽ xử lý network
+            enemy.TakeDamage(damage, transform.root.position, attackerForward);
             OverrideEnemyKnockback(enemy);
             hitEnemies.Add(enemyCollider);
             Debug.Log($"✅ Dealt {damage} damage to Enemy: {enemyCollider.name}");
@@ -74,6 +78,7 @@ public class WeaponHitbox : MonoBehaviour
 
         if (bossHealth != null)
         {
+            // Gọi TakeDamage - bên trong BossHealth sẽ xử lý network
             bossHealth.TakeDamage(damage);
             hitEnemies.Add(bossCollider);
             Debug.Log($"✅ Dealt {damage} damage to Boss: {bossCollider.name}");

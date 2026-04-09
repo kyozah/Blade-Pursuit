@@ -27,18 +27,19 @@ public class EnemyManager : MonoBehaviour
     public float spawnHeight = 0f;
 
     [Header("Attack Management")]
-    public float attackCooldown = 2f; // Delay giữa các attack (default 2s)
+    public float attackCooldown = 2f;
 
     [Header("Debug")]
     public bool showDebugInfo = false;
 
     private List<Enemy> enemies = new List<Enemy>();
     private bool playerInZone = false;
-    private bool hasSpawnedOnce = false; // ensure we only spawn enemies one time
+    private bool hasSpawnedOnce = false;
     private Transform player;
     private float lastAttackTime = -Mathf.Infinity;
     private Enemy currentAttackingEnemy = null;
     private System.Random deterministicRng;
+    private NetworkRunner cachedRunner;
 
     void Start()
     {
@@ -48,7 +49,6 @@ public class EnemyManager : MonoBehaviour
             ^ Mathf.RoundToInt(transform.position.z * 100f);
         deterministicRng = new System.Random(seed);
 
-        // Kiểm tra Collider ngay từ đầu
         Collider col = GetComponent<Collider>();
         if (col == null)
         {
@@ -58,11 +58,12 @@ public class EnemyManager : MonoBehaviour
         {
             Debug.LogWarning($"EnemyManager '{gameObject.name}' Collider 'IsTrigger' = false. OnTriggerEnter won't fire.");
         }
+        
+        cachedRunner = FindFirstObjectByType<NetworkRunner>();
     }
 
     void Update()
     {
-        // Nếu chưa tìm thấy player, hãy thử tìm mỗi Frame cho đến khi thấy
         if (player == null)
         {
             GameObject playerObj = FindPreferredPlayer();
@@ -71,7 +72,6 @@ public class EnemyManager : MonoBehaviour
                 player = playerObj.transform;
                 Debug.Log("[EnemyManager] Đã tìm thấy Player mạng!");
 
-                // Kiểm tra xem player có đang đứng sẵn trong vùng kích hoạt không
                 Collider col = GetComponent<Collider>();
                 if (col != null && col.bounds.Contains(player.position))
                 {
@@ -100,23 +100,28 @@ public class EnemyManager : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInZone = false;
-            // Có thể despawn enemies nếu muốn, nhưng theo yêu cầu, giữ lại
         }
     }
 
     void SpawnEnemies()
     {
-        var runner = FindFirstObjectByType<NetworkRunner>();
-        if (runner != null && !runner.IsServer)
+        // ✅ CHỈ HOST mới được spawn enemy
+        if (cachedRunner == null)
+            cachedRunner = FindFirstObjectByType<NetworkRunner>();
+            
+        if (cachedRunner != null && !cachedRunner.IsServer)
+        {
+            if (showDebugInfo) Debug.Log("[EnemyManager] Client - skipping enemy spawn (only host spawns)");
             return;
+        }
 
-        if (hasSpawnedOnce) return; // guard in case called elsewhere
-        // Remove destroyed/null entries before spawning
+        if (hasSpawnedOnce) return;
+        
         enemies.RemoveAll(e => e == null);
 
         if (skeletonPrefab == null && flyPrefab == null && tankPrefab == null)
         {
-            Debug.LogError($"EnemyManager '{gameObject.name}' has no prefabs assigned (skeleton/fly/tank). Assign at least one prefab.");
+            Debug.LogError($"EnemyManager '{gameObject.name}' has no prefabs assigned!");
             return;
         }
 
@@ -126,11 +131,10 @@ public class EnemyManager : MonoBehaviour
             GameObject prefab = GetRandomPrefab();
             if (prefab == null)
             {
-                Debug.LogWarning($"EnemyManager '{gameObject.name}' no allowed prefabs to spawn (check 'Allow' toggles and assigned prefabs).");
+                Debug.LogWarning($"EnemyManager '{gameObject.name}' no allowed prefabs to spawn");
                 continue;
             }
 
-            // Enforce Fly per-zone limit: if prefab chosen is Fly but limit reached, pick alternate
             if (prefab == flyPrefab && maxFlyPerZone >= 0)
             {
                 int existingFlies = 0;
@@ -141,23 +145,18 @@ public class EnemyManager : MonoBehaviour
                 }
                 if (existingFlies >= maxFlyPerZone)
                 {
-                    // Try to get an alternate prefab excluding Fly
                     prefab = GetRandomPrefabExcludingFly();
-                    if (prefab == null)
-                    {
-                        // nothing else allowed to spawn, skip this slot
-                        if (showDebugInfo) Debug.Log($"EnemyManager '{gameObject.name}': max flies reached ({existingFlies}), skipping spawn.");
-                        continue;
-                    }
+                    if (prefab == null) continue;
                 }
             }
 
-            GameObject enemyObj = SpawnEnemyObject(prefab, spawnPos, runner);
+            GameObject enemyObj = SpawnEnemyObject(prefab, spawnPos);
             if (enemyObj == null)
             {
                 Debug.LogError($"Failed to instantiate prefab {prefab.name} at {spawnPos}");
                 continue;
             }
+            
             Enemy enemy = enemyObj.GetComponent<Enemy>();
             if (enemy != null)
             {
@@ -174,7 +173,6 @@ public class EnemyManager : MonoBehaviour
 
     GameObject GetRandomPrefabExcludingFly()
     {
-        // Build a weighted list of allowed prefabs excluding fly
         var prefabs = new System.Collections.Generic.List<GameObject>();
         var weights = new System.Collections.Generic.List<float>();
 
@@ -207,7 +205,6 @@ public class EnemyManager : MonoBehaviour
 
     GameObject GetRandomPrefab()
     {
-        // Build a weighted list of allowed prefabs
         var prefabs = new System.Collections.Generic.List<GameObject>();
         var weights = new System.Collections.Generic.List<float>();
 
@@ -289,18 +286,8 @@ public class EnemyManager : MonoBehaviour
         float cooldown = attackCooldown;
         if (enemy != null && enemy.attackCooldownOverride > 0f) cooldown = enemy.attackCooldownOverride;
         float sinceLast = Time.time - lastAttackTime;
-        if (sinceLast < cooldown)
-        {
-            if ((enemy != null && enemy.showDebugInfo) || showDebugInfo)
-                Debug.Log($"CanAttack('{(enemy!=null?enemy.gameObject.name:"<null>")}'): cooldown active ({sinceLast:F2}s/{cooldown}s)");
-            return false;
-        }
-        if (currentAttackingEnemy != null && currentAttackingEnemy != enemy)
-        {
-            if ((enemy != null && enemy.showDebugInfo) || showDebugInfo)
-                Debug.Log($"CanAttack('{(enemy!=null?enemy.gameObject.name:"<null>")}'): another enemy '{currentAttackingEnemy.gameObject.name}' is currently attacking.");
-            return false;
-        }
+        if (sinceLast < cooldown) return false;
+        if (currentAttackingEnemy != null && currentAttackingEnemy != enemy) return false;
         return true;
     }
 
@@ -314,7 +301,7 @@ public class EnemyManager : MonoBehaviour
         if (currentAttackingEnemy == enemy)
         {
             currentAttackingEnemy = null;
-            lastAttackTime = Time.time; // start cooldown after attack finishes
+            lastAttackTime = Time.time;
         }
     }
 
@@ -337,10 +324,13 @@ public class EnemyManager : MonoBehaviour
         }
     }
 
-    private GameObject SpawnEnemyObject(GameObject prefab, Vector3 spawnPos, NetworkRunner runner)
+    private GameObject SpawnEnemyObject(GameObject prefab, Vector3 spawnPos)
     {
-        if (runner == null)
-            return Instantiate(prefab, spawnPos, Quaternion.identity);
+        if (cachedRunner == null)
+            cachedRunner = FindFirstObjectByType<NetworkRunner>();
+            
+        if (cachedRunner == null || !cachedRunner.IsServer)
+            return null;
 
         var netObjPrefab = prefab.GetComponent<NetworkObject>();
         if (netObjPrefab == null)
@@ -349,7 +339,7 @@ public class EnemyManager : MonoBehaviour
             return Instantiate(prefab, spawnPos, Quaternion.identity);
         }
 
-        var spawned = runner.Spawn(netObjPrefab, spawnPos, Quaternion.identity, default);
+        var spawned = cachedRunner.Spawn(netObjPrefab, spawnPos, Quaternion.identity, default);
         return spawned != null ? spawned.gameObject : null;
     }
 }
