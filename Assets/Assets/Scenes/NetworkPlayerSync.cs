@@ -269,8 +269,13 @@ public class NetworkPlayerSync : NetworkBehaviour
             UpdateNetworkAnimationSnapshot(default);
         }
 
-        NetworkPosition = transform.position;
-        NetworkRotation = transform.eulerAngles;
+        // Chỉ StateAuthority mới được ghi Networked transform.
+        // Nếu proxy/client cũng ghi, sẽ gây jitter/lag do state bị "giành" qua lại.
+        if (HasStateAuthority)
+        {
+            NetworkPosition = transform.position;
+            NetworkRotation = transform.eulerAngles;
+        }
     }
 
     void Update()
@@ -279,7 +284,9 @@ public class NetworkPlayerSync : NetworkBehaviour
         {
             if (Vector3.Distance(transform.position, NetworkPosition) > 0.01f)
             {
-                transform.position = Vector3.Lerp(transform.position, NetworkPosition, Time.deltaTime * 5f);
+                // Dùng Runner.DeltaTime nếu có để mượt theo tick Fusion.
+                float dt = Runner != null ? Runner.DeltaTime : Time.deltaTime;
+                transform.position = Vector3.Lerp(transform.position, NetworkPosition, dt * 10f);
             }
             else
             {
