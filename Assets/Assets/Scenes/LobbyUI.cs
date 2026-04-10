@@ -95,6 +95,18 @@ public class LobbyUI : MonoBehaviour
         foreach (var item in _items) Destroy(item.gameObject);
         _items.Clear();
 
+        if (roomListContainer == null)
+        {
+            Debug.LogError("[LobbyUI] roomListContainer chưa được gán trong Inspector.");
+            return;
+        }
+
+        if (roomListItemPrefab == null)
+        {
+            Debug.LogError("[LobbyUI] roomListItemPrefab đang NULL (chưa gán prefab item phòng).");
+            return;
+        }
+
         foreach (var s in sessions)
         {
             var item = Instantiate(roomListItemPrefab, roomListContainer);

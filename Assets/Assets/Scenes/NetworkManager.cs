@@ -9,7 +9,11 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     private NetworkRunner _runner;
     public LobbyUI lobbyUI;
     public NetworkPrefabRef playerPrefab;
+    [Header("Optional - Networked singletons")]
+    [Tooltip("Prefab có NetworkObject + NetworkChatManager. Host sẽ spawn 1 instance để chat hoạt động.")]
+    public NetworkPrefabRef networkChatManagerPrefab;
     private Dictionary<PlayerRef, NetworkObject> _spawnedPlayers = new();
+    private NetworkObject _spawnedChatManager;
     
     private string localPlayerName = "";
     
@@ -107,6 +111,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (!runner.IsServer) return;
 
+        EnsureNetworkChatManagerSpawned(runner);
+
         var spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
         Vector3 spawnPos;
         Quaternion spawnRot;
@@ -129,6 +135,34 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         
         // Không gán tên tại đây: mỗi player sẽ tự gửi tên của chính mình
         // trong NetworkPlayerSync để tránh host gán nhầm tên cho client.
+    }
+
+    private void EnsureNetworkChatManagerSpawned(NetworkRunner runner)
+    {
+        if (runner == null || !runner.IsServer)
+            return;
+
+        // NetworkObject trong một số version Fusion không có property .Object
+        // (NetworkBehaviour mới có .Object). Chỉ cần check Unity-null là đủ.
+        if (_spawnedChatManager != null)
+            return;
+
+        // Nếu trong scene đã có instance mạng hợp lệ thì dùng luôn.
+        var existing = FindFirstObjectByType<NetworkChatManager>();
+        if (existing != null && existing.Object != null)
+        {
+            _spawnedChatManager = existing.Object;
+            return;
+        }
+
+        if (networkChatManagerPrefab.Equals(default(NetworkPrefabRef)))
+        {
+            Debug.LogError("[NET] networkChatManagerPrefab chưa được gán. Chat sẽ không hoạt động (NetworkChatManager.Object == null).");
+            return;
+        }
+
+        _spawnedChatManager = runner.Spawn(networkChatManagerPrefab, Vector3.zero, Quaternion.identity, default);
+        Debug.Log($"[NET] Spawned NetworkChatManager: {_spawnedChatManager != null}");
     }
     
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)

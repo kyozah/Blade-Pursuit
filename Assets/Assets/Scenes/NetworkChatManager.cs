@@ -17,16 +17,45 @@ public class NetworkChatManager : NetworkBehaviour
     public override void Spawned()
     {
         Debug.Log($"[ChatManager] Spawned - HasStateAuthority: {HasStateAuthority}, Object: {Object != null}");
-        
+
+        // Chọn instance hợp lệ nhất (ưu tiên instance đã được Fusion init, tức Object != null).
         if (Instance == null)
         {
             Instance = this;
             Debug.Log("[ChatManager] Instance set");
+            return;
         }
-        else
+
+        if (Instance == this)
+            return;
+
+        bool existingReady = Instance != null && Instance.Object != null;
+        bool thisReady = Object != null;
+
+        // Nếu instance cũ chưa ready nhưng instance mới ready → thay thế.
+        if (!existingReady && thisReady)
         {
-            Destroy(gameObject);
+            Debug.LogWarning("[ChatManager] Replacing non-ready Instance with ready one.");
+            try { Destroy(Instance.gameObject); } catch { }
+            Instance = this;
+            return;
         }
+
+        // Nếu instance cũ đã ready → hủy cái mới để tránh double-RPC/listener.
+        Debug.LogWarning("[ChatManager] Duplicate instance detected. Destroying duplicate.");
+        Destroy(gameObject);
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
     
     // ✅ KIỂM TRA OBJECT TRƯỚC KHI GỌI RPC
