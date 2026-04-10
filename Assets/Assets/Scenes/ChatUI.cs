@@ -21,6 +21,8 @@ public class ChatUI : MonoBehaviour
     private NetworkChatManager chatManager;
     private string localPlayerName;
     private bool isSubscribed;
+    private readonly Queue<string> pendingMessages = new Queue<string>();
+    private bool flushLoopRunning;
     
     void Start()
     {
@@ -64,6 +66,9 @@ public class ChatUI : MonoBehaviour
             }
 
             CancelInvoke(nameof(FindChatManager));
+
+            // Nếu lúc trước có message bị queue vì chưa ready thì flush ngay.
+            EnsureFlushLoop();
         }
     }
     
@@ -120,34 +125,72 @@ public class ChatUI : MonoBehaviour
         }
         
         Debug.Log($"Sending message: '{message}'");
-        
-        // ✅ KIỂM TRA CHAT MANAGER
+
+        // Luôn clear input để UX mượt, dù message có thể được gửi trễ.
+        chatInputField.text = "";
+
+        EnqueueMessage(message);
+    }
+
+    private void EnqueueMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return;
+
+        pendingMessages.Enqueue(message);
+        EnsureFlushLoop();
+    }
+
+    private void EnsureFlushLoop()
+    {
+        if (flushLoopRunning)
+            return;
+
+        flushLoopRunning = true;
+        InvokeRepeating(nameof(FlushPendingMessages), 0.1f, 0.25f);
+    }
+
+    private void StopFlushLoopIfIdle()
+    {
+        if (pendingMessages.Count > 0)
+            return;
+
+        flushLoopRunning = false;
+        CancelInvoke(nameof(FlushPendingMessages));
+    }
+
+    private void FlushPendingMessages()
+    {
+        // Lấy lại tên local phòng trường hợp vào game trước khi NameInputUI set xong.
+        var networkManager = FindFirstObjectByType<NetworkManager>();
+        localPlayerName = networkManager != null ? networkManager.GetLocalPlayerName() : PlayerPrefs.GetString("PlayerName", "Player");
+
+        // 1) Chat manager phải tồn tại và đã được Fusion init (Object != null)
         if (chatManager == null)
-        {
             chatManager = FindFirstObjectByType<NetworkChatManager>();
-            if (chatManager == null)
-            {
-                Debug.LogError("ChatManager is null! Cannot send message.");
-                return;
-            }
-        }
-        
-        // ✅ KIỂM TRA RUNNER
+
+        if (chatManager == null || chatManager.Object == null)
+            return;
+
+        // 2) Runner phải tồn tại và có LocalPlayer hợp lệ
         var runner = FindFirstObjectByType<NetworkRunner>();
         if (runner == null)
-        {
-            Debug.LogError("NetworkRunner not found!");
             return;
-        }
-        
-        if (runner.LocalPlayer == null)
-        {
-            Debug.LogError("LocalPlayer is null!");
+
+        PlayerRef sender = runner.LocalPlayer;
+        // Một số version Fusion không có PlayerRef.IsValid → dùng so sánh với None/default.
+        if (sender == PlayerRef.None || sender == default)
             return;
+
+        // 3) Gửi hết queue (giới hạn an toàn mỗi tick để tránh spike)
+        int maxPerTick = 5;
+        for (int i = 0; i < maxPerTick && pendingMessages.Count > 0; i++)
+        {
+            string msg = pendingMessages.Dequeue();
+            chatManager.SendChatMessage(msg, localPlayerName, sender);
         }
-        
-        chatManager.SendChatMessage(message, localPlayerName, runner.LocalPlayer);
-        chatInputField.text = "";
+
+        StopFlushLoopIfIdle();
     }
     
     void OnNewMessage(NetworkChatMessage msg)
@@ -200,5 +243,8 @@ public class ChatUI : MonoBehaviour
         if (chatManager != null)
             chatManager.OnNewMessage -= OnNewMessage;
         isSubscribed = false;
+
+        CancelInvoke(nameof(FindChatManager));
+        CancelInvoke(nameof(FlushPendingMessages));
     }
 }
