@@ -77,6 +77,7 @@ public class EnemyManager : MonoBehaviour
                 {
                     playerInZone = true;
                     SpawnEnemies();
+                    hasSpawnedOnce = true;
                 }
             }
         }
@@ -169,6 +170,8 @@ public class EnemyManager : MonoBehaviour
                 Destroy(enemyObj);
             }
         }
+
+        hasSpawnedOnce = true;
     }
 
     GameObject GetRandomPrefabExcludingFly()

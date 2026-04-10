@@ -106,7 +106,7 @@ public class NetworkPlayerSync : NetworkBehaviour
                 }
                 
                 Debug.Log($"[NetworkPlayerSync] Local player name: {playerName}");
-                NetworkPlayerName = playerName;
+                SubmitLocalPlayerName(playerName);
                 
                 if (_nameTag != null)
                 {
@@ -177,6 +177,40 @@ public class NetworkPlayerSync : NetworkBehaviour
                 Debug.Log($"[NetworkPlayerSync] Updated remote player name to: {networkName}");
             }
         }
+    }
+
+    private void SubmitLocalPlayerName(string playerName)
+    {
+        if (string.IsNullOrWhiteSpace(playerName))
+            playerName = "Player";
+
+        if (HasStateAuthority)
+        {
+            NetworkPlayerName = playerName;
+            SyncNameIntoChat(playerName, Object.InputAuthority);
+            return;
+        }
+
+        RpcSetPlayerName(playerName);
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RpcSetPlayerName(string playerName, RpcInfo info = default)
+    {
+        if (string.IsNullOrWhiteSpace(playerName))
+            playerName = "Player";
+
+        NetworkPlayerName = playerName;
+        SyncNameIntoChat(playerName, info.Source);
+    }
+
+    private void SyncNameIntoChat(string playerName, PlayerRef playerRef)
+    {
+        var chatManager = FindFirstObjectByType<NetworkChatManager>();
+        if (chatManager == null)
+            return;
+
+        chatManager.RegisterPlayerName(playerRef, playerName);
     }
 
     public override void FixedUpdateNetwork()

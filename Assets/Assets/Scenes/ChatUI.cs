@@ -20,6 +20,7 @@ public class ChatUI : MonoBehaviour
     private List<GameObject> messageObjects = new List<GameObject>();
     private NetworkChatManager chatManager;
     private string localPlayerName;
+    private bool isSubscribed;
     
     void Start()
     {
@@ -29,8 +30,8 @@ public class ChatUI : MonoBehaviour
         sendButton.onClick.AddListener(OnSendMessage);
         chatInputField.onSubmit.AddListener(_ => OnSendMessage());
         
-        // ✅ TÌM CHAT MANAGER VỚI DELAY
-        Invoke(nameof(FindChatManager), 0.5f);
+        // Chat manager có thể spawn trễ hơn UI, nên retry để không mất chat.
+        InvokeRepeating(nameof(FindChatManager), 0.25f, 0.5f);
         
         var networkManager = FindFirstObjectByType<NetworkManager>();
         localPlayerName = networkManager != null ? networkManager.GetLocalPlayerName() : PlayerPrefs.GetString("PlayerName", "Player");
@@ -39,17 +40,30 @@ public class ChatUI : MonoBehaviour
     
     void FindChatManager()
     {
+        if (isSubscribed && chatManager != null)
+        {
+            CancelInvoke(nameof(FindChatManager));
+            return;
+        }
+
         chatManager = FindFirstObjectByType<NetworkChatManager>();
         Debug.Log($"ChatManager found: {chatManager != null}");
         
         if (chatManager != null)
         {
-            chatManager.OnNewMessage += OnNewMessage;
+            if (!isSubscribed)
+            {
+                chatManager.OnNewMessage += OnNewMessage;
+                isSubscribed = true;
+            }
+
             var history = chatManager.GetChatHistory();
             foreach (var msg in history)
             {
                 AddMessageToUI(msg);
             }
+
+            CancelInvoke(nameof(FindChatManager));
         }
     }
     
@@ -185,5 +199,6 @@ public class ChatUI : MonoBehaviour
     {
         if (chatManager != null)
             chatManager.OnNewMessage -= OnNewMessage;
+        isSubscribed = false;
     }
 }

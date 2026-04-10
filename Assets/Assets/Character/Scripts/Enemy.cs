@@ -121,8 +121,7 @@ public class Enemy : MonoBehaviour
     void UpdateAI()
     {
         if (manager == null) return;
-        if (player == null)
-            player = manager.GetPlayer();
+        player = ResolveNearestPlayerTarget();
         if (player == null) return;
 
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
@@ -183,6 +182,35 @@ public class Enemy : MonoBehaviour
                 }
                 break;
         }
+    }
+
+    private Transform ResolveNearestPlayerTarget()
+    {
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        if (players == null || players.Length == 0)
+            return null;
+
+        Transform best = null;
+        float bestDistanceSqr = float.MaxValue;
+
+        foreach (GameObject playerObj in players)
+        {
+            if (playerObj == null)
+                continue;
+
+            var health = playerObj.GetComponent<PlayerHealth>();
+            if (health != null && health.IsDead())
+                continue;
+
+            float sqr = (playerObj.transform.position - transform.position).sqrMagnitude;
+            if (sqr < bestDistanceSqr)
+            {
+                bestDistanceSqr = sqr;
+                best = playerObj.transform;
+            }
+        }
+
+        return best;
     }
 
     void MoveTowards(Vector3 target)

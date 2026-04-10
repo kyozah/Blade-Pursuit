@@ -19,6 +19,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         _runner.ProvideInput = true;
         _runner.AddCallbacks(this);
         DontDestroyOnLoad(gameObject);
+
+        // Đảm bảo luôn có tên local ngay cả khi chưa bấm lại UI.
+        localPlayerName = PlayerPrefs.GetString("PlayerName", "");
     }
     
     public void SetLocalPlayerName(string name)
@@ -28,7 +31,14 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         PlayerPrefs.Save();
     }
     
-    public string GetLocalPlayerName() => localPlayerName;
+    public string GetLocalPlayerName()
+    {
+        if (!string.IsNullOrWhiteSpace(localPlayerName))
+            return localPlayerName;
+
+        localPlayerName = PlayerPrefs.GetString("PlayerName", "Player");
+        return localPlayerName;
+    }
     
     public async void JoinLobby()
     {
@@ -117,14 +127,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         var obj = runner.Spawn(playerPrefab, spawnPos, spawnRot, player);
         _spawnedPlayers[player] = obj;
         
-        if (runner.IsServer && !string.IsNullOrEmpty(localPlayerName))
-        {
-            var chatManager = FindFirstObjectByType<NetworkChatManager>();
-            if (chatManager != null)
-            {
-                chatManager.RegisterPlayerName(player, localPlayerName);
-            }
-        }
+        // Không gán tên tại đây: mỗi player sẽ tự gửi tên của chính mình
+        // trong NetworkPlayerSync để tránh host gán nhầm tên cho client.
     }
     
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
