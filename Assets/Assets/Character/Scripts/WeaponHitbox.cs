@@ -55,10 +55,7 @@ public class WeaponHitbox : MonoBehaviour
 
         if (enemy != null)
         {
-            // Lấy hướng player đang nhìn để knockback
             Vector3 attackerForward = transform.root.forward;
-            
-            // Gọi TakeDamage - bên trong Enemy sẽ xử lý network
             enemy.TakeDamage(damage, transform.root.position, attackerForward);
             OverrideEnemyKnockback(enemy);
             hitEnemies.Add(enemyCollider);
@@ -78,7 +75,6 @@ public class WeaponHitbox : MonoBehaviour
 
         if (bossHealth != null)
         {
-            // Gọi TakeDamage - bên trong BossHealth sẽ xử lý network
             bossHealth.TakeDamage(damage);
             hitEnemies.Add(bossCollider);
             Debug.Log($"✅ Dealt {damage} damage to Boss: {bossCollider.name}");

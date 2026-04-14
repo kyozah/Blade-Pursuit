@@ -56,18 +56,14 @@ public class BossNetworkSync : NetworkBehaviour
             return;
         }
 
-        if (!NetInitialized)
-            return;
+        if (!NetInitialized) return;
 
         transform.position = Vector3.Lerp(transform.position, NetPos, Runner.DeltaTime * 10f);
         transform.eulerAngles = NetEuler;
         _health?.ApplyNetworkHp(NetHp, NetDead);
     }
 
-    public bool IsNetworkReady()
-    {
-        return Object != null;
-    }
+    public bool IsNetworkReady() => Object != null;
 
     public void RequestDamage(float damage)
     {
@@ -76,21 +72,15 @@ public class BossNetworkSync : NetworkBehaviour
             ApplyDamageAuthority(damage);
             return;
         }
-
         RpcRequestDamage(damage);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RpcRequestDamage(float damage)
-    {
-        ApplyDamageAuthority(damage);
-    }
+    private void RpcRequestDamage(float damage) => ApplyDamageAuthority(damage);
 
     private void ApplyDamageAuthority(float damage)
     {
-        if (!HasStateAuthority || _health == null || _health.CurrentHP <= 0f)
-            return;
-
+        if (!HasStateAuthority || _health == null || _health.CurrentHP <= 0f) return;
         _health.TakeDamageAuthority(damage);
         NetHp = _health.CurrentHP;
         NetDead = _health.CurrentHP <= 0f;

@@ -1,13 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using Fusion;
 
-public class Enemy : MonoBehaviour
+public class Enemy : NetworkBehaviour
 {
     [Header("Stats")]
     public float maxHealth = 100f;
     public float attackDamage = 5f;
-    private float currentHealth;
+
+    [Networked] public float CurrentHealth { get; set; }
+    [Networked] public NetworkBool IsDeadNetworked { get; set; }
 
     [Header("AI Settings")]
     public float detectionRange = 15f;
@@ -46,10 +49,7 @@ public class Enemy : MonoBehaviour
     private bool isKnockedBack = false;
     private float originalDrag;
     private Coroutine knockbackCoroutine;
-    private bool isDead = false;
     private EnemyAudioSystem audioSystem;
-    private EnemyNetworkSync networkSync;
-    private bool suppressNetworkForward;
 
     private EnemyManager manager;
     protected Transform player;
@@ -63,11 +63,15 @@ public class Enemy : MonoBehaviour
 
     protected virtual void Start()
     {
-        currentHealth = maxHealth;
+        if (Object.HasStateAuthority)
+        {
+            CurrentHealth = maxHealth;
+            IsDeadNetworked = false;
+        }
+
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
         audioSystem = GetComponent<EnemyAudioSystem>();
-        networkSync = GetComponent<EnemyNetworkSync>();
 
         if (animator == null)
         {
@@ -80,18 +84,26 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        rb.useGravity = true;
-        rb.isKinematic = false;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        
-        originalDrag = rb.linearDamping;
+        // Client: tắt vật lý để tránh xung đột với NetworkTransform
+        if (!Object.HasStateAuthority)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
+        else
+        {
+            rb.useGravity = true;
+            rb.isKinematic = false;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            originalDrag = rb.linearDamping;
+        }
     }
 
     void Update()
     {
-        if (!IsSimulationEnabled()) return;
-        if (isDead) return;
+        if (!Object.HasStateAuthority) return;
+        if (IsDeadNetworked) return;
         if (isKnockedBack) return;
 
         UpdateAI();
@@ -99,13 +111,8 @@ public class Enemy : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!IsSimulationEnabled()) return;
-        if (rb != null && isKnockedBack)
-        {
-            rb.WakeUp();
-        }
-
-        if (isDead) return;
+        if (!Object.HasStateAuthority) return;
+        if (IsDeadNetworked) return;
 
         if (shouldMove && !isKnockedBack)
         {
@@ -115,7 +122,7 @@ public class Enemy : MonoBehaviour
         {
             bool movingValue = shouldMove && !isKnockedBack;
             animator.SetBool("IsMoving", movingValue);
-        }   
+        }
     }
 
     void UpdateAI()
@@ -264,7 +271,7 @@ public class Enemy : MonoBehaviour
     {
         yield return new WaitForSeconds(attackDelay);
 
-        if (isDead)
+        if (IsDeadNetworked)
         {
             manager.EndAttack(this);
             yield break;
@@ -351,24 +358,32 @@ public class Enemy : MonoBehaviour
         if (manager != null) manager.EndAttack(this);
     }
 
-    // ✅ SỬA: TakeDamage với network support
+    // ==================== SỬA LỖI DAMAGE CHO CLIENT ====================
     public void TakeDamage(float damage, Vector3 attackerPosition, Vector3 attackerForward)
     {
-        var runner = FindFirstObjectByType<NetworkRunner>();
-        
-        // Nếu đang chơi network và không phải Host -> gửi RPC lên Host
-        if (runner != null && !runner.IsServer && networkSync != null)
+        if (Object.HasStateAuthority)
         {
-            networkSync.RequestDamage(damage, attackerPosition, attackerForward);
-            return;
+            // Host trực tiếp gây damage
+            ApplyDamageAuthority(damage, attackerPosition, attackerForward);
         }
-        
-        // Host hoặc single player: trực tiếp
+        else
+        {
+            // Client gửi RPC yêu cầu Host gây damage
+            RpcRequestDamage(damage, attackerPosition, attackerForward);
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RpcRequestDamage(float damage, Vector3 attackerPosition, Vector3 attackerForward)
+    {
         ApplyDamageAuthority(damage, attackerPosition, attackerForward);
     }
+    // ====================================================================
 
     public void ApplyDamageAuthority(float damage, Vector3 attackerPosition, Vector3 attackerForward)
     {
+        if (IsDeadNetworked) return;
+
         if (rb == null)
         {
             Debug.LogError("❌ No Rigidbody!");
@@ -380,18 +395,10 @@ public class Enemy : MonoBehaviour
             Debug.Log($"\n💥 TakeDamage: {gameObject.name}");
         }
 
-        currentHealth -= damage;
+        CurrentHealth -= damage;
         lastDamageTime = Time.time;
-        
-        if (audioSystem != null)
-        {
-            audioSystem.PlayDamageSound();
-        }
 
-        if (animator != null)
-        {
-            animator.SetTrigger("Hit");
-        }
+        RpcPlayDamageEffects();
 
         Vector3 knockbackDirection;
 
@@ -414,9 +421,34 @@ public class Enemy : MonoBehaviour
 
         ApplyVelocityKnockback(knockbackDirection);
 
-        if (currentHealth <= 0)
+        if (CurrentHealth <= 0)
         {
+            IsDeadNetworked = true;
             Die();
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcPlayDamageEffects()
+    {
+        if (audioSystem != null) audioSystem.PlayDamageSound();
+        if (animator != null) animator.SetTrigger("Hit");
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcPlayDeathEffects()
+    {
+        if (audioSystem != null) audioSystem.PlayDeathSound();
+        if (animator != null)
+        {
+            if (hasIsDead)
+            {
+                try { animator.SetBool("IsDead", true); } catch { }
+            }
+            else
+            {
+                animator.SetTrigger("Death");
+            }
         }
     }
 
@@ -438,7 +470,7 @@ public class Enemy : MonoBehaviour
         rb.WakeUp();
 
         Vector3 knockbackForceVector = direction * knockbackForce;
-        
+
         rb.linearVelocity = new Vector3(knockbackForceVector.x, rb.linearVelocity.y, knockbackForceVector.z);
         rb.AddForce(Vector3.up * knockbackUpwardForce, ForceMode.VelocityChange);
         rb.linearDamping = knockbackDrag;
@@ -463,37 +495,15 @@ public class Enemy : MonoBehaviour
 
     void Die()
     {
-        if (isDead) return;
-        isDead = true;
+        if (IsDeadNetworked == false) return;
 
         Debug.Log($"💀 {gameObject.name} died");
 
-        if (audioSystem != null)
-        {
-            audioSystem.PlayDeathSound();
-        }
+        RpcPlayDeathEffects();
 
         if (manager != null)
         {
             manager.RemoveEnemy(this);
-        }
-
-        if (animator != null)
-        {
-            if (hasIsDead)
-            {
-                bool alreadyDead = false;
-                try { alreadyDead = animator.GetBool("IsDead"); } catch { }
-                if (!alreadyDead)
-                {
-                    animator.SetBool("IsDead", true);
-                }
-            }
-            else
-            {
-                animator.ResetTrigger("Death");
-                animator.SetTrigger("Death");
-            }
         }
 
         if (knockbackCoroutine != null)
@@ -516,19 +526,34 @@ public class Enemy : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        if (useDeathAnimationEvent && animator != null)
+        if (Object.HasStateAuthority)
         {
-            // Chờ animation event
+            StartCoroutine(DestroyAfterDelay(deathAnimationDuration));
+        }
+    }
+
+    IEnumerator DestroyAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (Object != null && Runner != null)
+        {
+            Runner.Despawn(Object);
         }
         else
         {
-            Destroy(gameObject, deathAnimationDuration);
+            Destroy(gameObject);
         }
     }
 
     public void OnDeathAnimationComplete()
     {
-        Destroy(gameObject);
+        if (Object.HasStateAuthority)
+        {
+            if (Object != null && Runner != null)
+                Runner.Despawn(Object);
+            else
+                Destroy(gameObject);
+        }
     }
 
     public void SetManager(EnemyManager mgr)
@@ -552,29 +577,11 @@ public class Enemy : MonoBehaviour
 
     public bool IsDead
     {
-        get { return isDead; }
+        get { return IsDeadNetworked; }
     }
 
     public float GetCurrentHealth()
     {
-        return currentHealth;
-    }
-
-    public void SetSimulationEnabled(bool enabled)
-    {
-        suppressNetworkForward = !enabled;
-    }
-
-    public void ApplyNetworkMirrorState(float hp, bool dead)
-    {
-        currentHealth = hp;
-        if (dead && !isDead)
-            Die();
-    }
-
-    private bool IsSimulationEnabled()
-    {
-        if (networkSync == null) return true;
-        return networkSync.HasStateAuthority;
+        return CurrentHealth;
     }
 }

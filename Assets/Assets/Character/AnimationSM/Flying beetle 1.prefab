@@ -1903,7 +1903,7 @@ GameObject:
   - component: {fileID: 4804628476374036555}
   - component: {fileID: 2606436364681060125}
   - component: {fileID: -4318565831423136689}
-  - component: {fileID: -4708290097019442696}
+  - component: {fileID: 3544308968828091987}
   m_Layer: 0
   m_Name: Flying beetle 1
   m_TagString: Enemy
@@ -2013,6 +2013,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Ghoul
   maxHealth: 30
   attackDamage: 4
+  _CurrentHealth: 0
+  _IsDeadNetworked:
+    _value: 0
+  _NetworkPosition: {x: 0, y: 0, z: 0}
+  _NetworkRotation: {x: 0, y: 0, z: 0}
   detectionRange: 100
   attackRange: 4
   retreatDistance: 5
@@ -2067,9 +2072,10 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
-  - {fileID: -4708290097019442696}
+  - {fileID: 4804628476374036555}
+  - {fileID: 3544308968828091987}
   ForceRemoteRenderTimeframe: 0
---- !u!114 &-4708290097019442696
+--- !u!114 &3544308968828091987
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2078,9 +2084,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 755561605113938861}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f3fde81fd3e2c364687baa992ff08476, type: 3}
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkSync
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0
 --- !u!1 &776072000167709224
 GameObject:
   m_ObjectHideFlags: 0

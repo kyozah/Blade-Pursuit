@@ -18,8 +18,8 @@ public class BossBrain : MonoBehaviour
     public float chargeCooldown = 5f;
 
     [Header("Combat Behavior")]
-    public bool enableReposition = false; // Toggle reposition
-    public float attackCooldown = 1.0f; // Cooldown giữa các attacks
+    public bool enableReposition = false;
+    public float attackCooldown = 1.0f;
 
     public enum State { Idle, Roar, Move, Attack, Cooldown, Dead }
     public enum Phase { Phase1, Phase2 }
@@ -29,7 +29,6 @@ public class BossBrain : MonoBehaviour
 
     bool hasRoaredOnce;
     bool phase2Roared;
-
     float moveTimer;
     float lastChargeTime = -999f;
     float cooldownTimer;
@@ -60,11 +59,13 @@ public class BossBrain : MonoBehaviour
 
         float dist = Vector3.Distance(transform.position, player.position);
 
-        // Always check if player is in detection range and show UI
         if (!hasRoaredOnce && dist <= detectRange)
         {
             ShowBossUI();
             hasRoaredOnce = true;
+            currentState = State.Roar;
+            movement.Lock();
+            combat.DoRoar1();
         }
 
         switch (currentState)
@@ -83,26 +84,20 @@ public class BossBrain : MonoBehaviour
 
     void CheckPhase()
     {
-        if (currentPhase == Phase.Phase1 &&
-            health.CurrentHP <= health.MaxHP * 0.5f &&
-            !phase2Roared)
+        if (currentPhase == Phase.Phase1 && health.CurrentHP <= health.MaxHP * 0.5f && !phase2Roared)
         {
             phase2Roared = true;
             currentPhase = Phase.Phase2;
             currentState = State.Roar;
-
-            // Notify UI as well (re-show/bind)
-            BossUIManager.Instance?.ShowBoss(this);
-
             movement.Lock();
             combat.DoRoar2();
+            BossUIManager.Instance?.ShowBoss(this);
         }
     }
 
     void HandleIdle(float dist)
     {
         movement.LookAt(player.position);
-
         if (dist <= detectRange)
         {
             currentState = State.Roar;
@@ -110,14 +105,8 @@ public class BossBrain : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Show the boss UI when player is detected
-    /// </summary>
     void ShowBossUI()
     {
-        Debug.Log($"[BossBrain] Player detected! Showing UI");
-
-        // Show this boss's UI if assigned
         if (bossHealthScreenUI != null)
         {
             BossHealth bHealth = GetComponentInChildren<BossHealth>();
@@ -125,12 +114,7 @@ public class BossBrain : MonoBehaviour
             {
                 bossHealthScreenUI.BindToBoss(bHealth);
                 bossHealthScreenUI.ShowNameIntro();
-                Debug.Log($"[BossBrain] Showed UI for boss");
             }
-        }
-        else
-        {
-            Debug.LogWarning("[BossBrain] bossHealthScreenUI not assigned!");
         }
     }
 
@@ -146,8 +130,7 @@ public class BossBrain : MonoBehaviour
             return;
         }
 
-        if (moveTimer >= chargeMoveTime &&
-            Time.time >= lastChargeTime + chargeCooldown)
+        if (moveTimer >= chargeMoveTime && Time.time >= lastChargeTime + chargeCooldown)
         {
             moveTimer = 0;
             lastChargeTime = Time.time;
@@ -187,13 +170,9 @@ public class BossBrain : MonoBehaviour
     void HandleCooldown(float dist)
     {
         cooldownTimer -= Time.deltaTime;
-
-        // Nhìn player trong lúc cooldown
         movement.LookAt(player.position);
-
         if (cooldownTimer <= 0f)
         {
-            // Hết cooldown -> quay lại Move
             currentState = State.Move;
             moveTimer = 0;
         }
@@ -221,7 +200,6 @@ public class BossBrain : MonoBehaviour
 
         if (enableReposition)
         {
-            // Old behavior: lùi lại
             float dist = Vector3.Distance(transform.position, player.position);
             if (dist < 4f)
             {
@@ -236,7 +214,6 @@ public class BossBrain : MonoBehaviour
         }
         else
         {
-            // New behavior: cooldown tại chỗ rồi tiếp tục tấn công
             currentState = State.Cooldown;
             cooldownTimer = attackCooldown;
         }
@@ -251,7 +228,6 @@ public class BossBrain : MonoBehaviour
     public void OnDie()
     {
         if (currentState == State.Dead) return;
-
         currentState = State.Dead;
         movement.Lock();
         ClearPhysics();
@@ -268,32 +244,17 @@ public class BossBrain : MonoBehaviour
         }
     }
 
-    void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectRange);
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, meleeRange);
-    }
-
     private Transform FindBestPlayerTarget()
     {
         var players = GameObject.FindGameObjectsWithTag("Player");
-        if (players == null || players.Length == 0)
-            return null;
-
+        if (players == null || players.Length == 0) return null;
         Transform closest = null;
         float closestSqr = float.MaxValue;
-
         foreach (var p in players)
         {
             if (p == null) continue;
-
             var health = p.GetComponent<PlayerHealth>();
-            if (health != null && health.IsDead())
-                continue;
-
+            if (health != null && health.IsDead()) continue;
             float sqr = (p.transform.position - transform.position).sqrMagnitude;
             if (sqr < closestSqr)
             {
@@ -301,7 +262,14 @@ public class BossBrain : MonoBehaviour
                 closest = p.transform;
             }
         }
-
         return closest;
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, detectRange);
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, meleeRange);
     }
 }

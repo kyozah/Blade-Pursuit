@@ -156,7 +156,6 @@ public class EnemyManager : NetworkBehaviour
 
     void SpawnEnemies()
     {
-        // ✅ CHỈ HOST mới được spawn enemy
         if (cachedRunner == null)
             cachedRunner = FindFirstObjectByType<NetworkRunner>();
             
@@ -392,7 +391,7 @@ public class EnemyManager : NetworkBehaviour
             return Instantiate(prefab, spawnPos, Quaternion.identity);
         }
 
-        var spawned = cachedRunner.Spawn(netObjPrefab, spawnPos, Quaternion.identity, default);
+        var spawned = cachedRunner.Spawn(netObjPrefab, spawnPos, Quaternion.identity);
         return spawned != null ? spawned.gameObject : null;
     }
 }

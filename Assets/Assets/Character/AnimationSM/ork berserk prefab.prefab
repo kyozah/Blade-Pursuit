@@ -11415,7 +11415,7 @@ GameObject:
   - component: {fileID: 1370078167521147250}
   - component: {fileID: -4514430412592180376}
   - component: {fileID: -3971152891831085174}
-  - component: {fileID: 2792794317705457252}
+  - component: {fileID: -3134794185229871576}
   m_Layer: 0
   m_Name: ork berserk prefab
   m_TagString: Enemy
@@ -11527,6 +11527,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Tank
   maxHealth: 75
   attackDamage: 6
+  _CurrentHealth: 0
+  _IsDeadNetworked:
+    _value: 0
+  _NetworkPosition: {x: 0, y: 0, z: 0}
+  _NetworkRotation: {x: 0, y: 0, z: 0}
   detectionRange: 20
   attackRange: 5.5
   retreatDistance: 5
@@ -11582,9 +11587,10 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
-  - {fileID: 2792794317705457252}
+  - {fileID: 1370078167521147250}
+  - {fileID: -3134794185229871576}
   ForceRemoteRenderTimeframe: 0
---- !u!114 &2792794317705457252
+--- !u!114 &-3134794185229871576
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -11593,9 +11599,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 5783773701163634531}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f3fde81fd3e2c364687baa992ff08476, type: 3}
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyNetworkSync
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkTransform
+  _stateAuthorityChangeErrorCorrectionDelta: 0
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 0
 --- !u!1 &5796257444759742637
 GameObject:
   m_ObjectHideFlags: 0
