@@ -53,9 +53,7 @@ public class BossBrain : MonoBehaviour
         if (!simulationEnabled) return;
         if (currentState == State.Dead) return;
 
-        if (player == null)
-            player = FindBestPlayerTarget();
-
+        player = FindBestPlayerTarget();
         if (player == null) return;
 
         CheckPhase();
@@ -281,34 +279,29 @@ public class BossBrain : MonoBehaviour
 
     private Transform FindBestPlayerTarget()
     {
-        // Ưu tiên player local (input authority) để mỗi máy luôn có target hợp lệ.
         var players = GameObject.FindGameObjectsWithTag("Player");
         if (players == null || players.Length == 0)
             return null;
 
-        Transform fallback = null;
-        int bestAuthorityId = int.MaxValue;
+        Transform closest = null;
+        float closestSqr = float.MaxValue;
 
         foreach (var p in players)
         {
             if (p == null) continue;
 
-            var netObj = p.GetComponent<NetworkObject>();
-            if (netObj != null)
+            var health = p.GetComponent<PlayerHealth>();
+            if (health != null && health.IsDead())
+                continue;
+
+            float sqr = (p.transform.position - transform.position).sqrMagnitude;
+            if (sqr < closestSqr)
             {
-                int id = netObj.InputAuthority.PlayerId;
-                if (id < bestAuthorityId)
-                {
-                    bestAuthorityId = id;
-                    fallback = p.transform;
-                }
-            }
-            else if (fallback == null)
-            {
-                fallback = p.transform;
+                closestSqr = sqr;
+                closest = p.transform;
             }
         }
 
-        return fallback;
+        return closest;
     }
 }

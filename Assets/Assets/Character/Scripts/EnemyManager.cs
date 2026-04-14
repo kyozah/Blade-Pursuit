@@ -3,7 +3,8 @@ using UnityEngine.Serialization;
 using System.Collections.Generic;
 using Fusion;
 
-public class EnemyManager : MonoBehaviour
+[RequireComponent(typeof(NetworkObject))]
+public class EnemyManager : NetworkBehaviour
 {
     [Header("Spawn Settings")]
     public GameObject skeletonPrefab;
@@ -33,13 +34,14 @@ public class EnemyManager : MonoBehaviour
     public bool showDebugInfo = false;
 
     private List<Enemy> enemies = new List<Enemy>();
-    private bool playerInZone = false;
+    private HashSet<int> playersInZone = new HashSet<int>();
     private bool hasSpawnedOnce = false;
     private Transform player;
     private float lastAttackTime = -Mathf.Infinity;
     private Enemy currentAttackingEnemy = null;
     private System.Random deterministicRng;
     private NetworkRunner cachedRunner;
+    private bool playerInZone;
 
     void Start()
     {
@@ -85,23 +87,71 @@ public class EnemyManager : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (!other.CompareTag("Player"))
+            return;
+
+        if (cachedRunner == null)
+            cachedRunner = FindFirstObjectByType<NetworkRunner>();
+
+        int playerId = other.gameObject.GetInstanceID();
+
+        if (cachedRunner != null && cachedRunner.IsServer)
         {
-            playerInZone = true;
-            if (!hasSpawnedOnce)
-            {
-                SpawnEnemies();
-                hasSpawnedOnce = true;
-            }
+            AddPlayerInZoneServer(playerId);
+        }
+        else
+        {
+            RpcRequestPlayerEnteredZone(playerId);
         }
     }
 
     void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (!other.CompareTag("Player"))
+            return;
+
+        if (cachedRunner == null)
+            cachedRunner = FindFirstObjectByType<NetworkRunner>();
+
+        int playerId = other.gameObject.GetInstanceID();
+
+        if (cachedRunner != null && cachedRunner.IsServer)
         {
-            playerInZone = false;
+            RemovePlayerFromZoneServer(playerId);
         }
+        else
+        {
+            RpcRequestPlayerLeftZone(playerId);
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RpcRequestPlayerEnteredZone(int playerId, RpcInfo info = default)
+    {
+        AddPlayerInZoneServer(playerId);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RpcRequestPlayerLeftZone(int playerId, RpcInfo info = default)
+    {
+        RemovePlayerFromZoneServer(playerId);
+    }
+
+    private void AddPlayerInZoneServer(int playerId)
+    {
+        if (!playersInZone.Add(playerId))
+            return;
+
+        if (!hasSpawnedOnce)
+        {
+            SpawnEnemies();
+            hasSpawnedOnce = true;
+        }
+    }
+
+    private void RemovePlayerFromZoneServer(int playerId)
+    {
+        playersInZone.Remove(playerId);
     }
 
     void SpawnEnemies()
@@ -315,7 +365,7 @@ public class EnemyManager : MonoBehaviour
 
     public bool IsPlayerInZone()
     {
-        return playerInZone;
+        return playersInZone.Count > 0;
     }
 
     public void RemoveEnemy(Enemy enemy)
