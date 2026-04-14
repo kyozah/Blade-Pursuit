@@ -15,6 +15,7 @@ public class NetworkPlayerSync : NetworkBehaviour
     
     // Tên người chơi đồng bộ qua mạng
     [Networked] public NetworkString<_16> NetworkPlayerName { get; set; }
+    
 
     // Components
     private ThirdPersonController _controller;
@@ -354,4 +355,5 @@ public class NetworkPlayerSync : NetworkBehaviour
             _lobbyUI = FindFirstObjectByType<LobbyUI>();
         _lobbyUI?.HideLobby();
     }
+    
 }

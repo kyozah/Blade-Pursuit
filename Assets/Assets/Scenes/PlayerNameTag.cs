@@ -24,7 +24,12 @@ public class PlayerNameTag : MonoBehaviour
         // ✅ CHỈ LẤY REFERENCE, KHÔNG GHI ĐÈ CÀI ĐẶT
         if (nameText == null)
         {
-            nameText = GetComponentInChildren<TextMeshProUGUI>();
+            nameText = GetComponentInChildren<TextMeshProUGUI>(true);
+        }
+
+        if (nameText != null && !string.IsNullOrEmpty(currentName))
+        {
+            nameText.text = currentName;
         }
         
         // ✅ KHÔNG set fontSize, alignment, color ở đây
@@ -54,6 +59,11 @@ public class PlayerNameTag : MonoBehaviour
         if (string.IsNullOrEmpty(name)) return;
         
         currentName = name;
+        
+        if (nameText == null)
+        {
+            nameText = GetComponentInChildren<TextMeshProUGUI>(true);
+        }
         
         if (nameText != null)
         {
