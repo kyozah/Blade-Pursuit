@@ -29,12 +29,29 @@ public class BossHealth : MonoBehaviour
     public void TakeDamage(float dmg)
     {
         var runner = FindFirstObjectByType<NetworkRunner>();
-        if (runner != null && !runner.IsServer && networkSync != null)
+        
+        // Nếu có network, gửi qua RPC
+        if (runner != null && networkSync != null)
         {
-            networkSync.RequestDamage(dmg);
-            return;
+            if (!runner.IsServer)
+            {
+                // Client gửi request đến host
+                Debug.Log($"[BossHealth] Client requesting damage: {dmg}");
+                networkSync.RequestDamage(dmg);
+            }
+            else
+            {
+                // Host apply directly
+                Debug.Log($"[BossHealth] Host applying damage: {dmg}");
+                TakeDamageAuthority(dmg);
+            }
         }
-        TakeDamageAuthority(dmg);
+        else
+        {
+            // Single player - apply directly
+            Debug.Log($"[BossHealth] Single player damage: {dmg}");
+            TakeDamageAuthority(dmg);
+        }
     }
 
     public void TakeDamageAuthority(float dmg)

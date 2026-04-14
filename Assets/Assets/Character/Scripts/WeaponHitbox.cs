@@ -69,6 +69,19 @@ public class WeaponHitbox : MonoBehaviour
 
     void DealDamageToBoss(Collider bossCollider)
     {
+        // Tìm BossNetworkSync trước (priority cao hơn để damage được sync)
+        BossNetworkSync networkSync = bossCollider.GetComponentInParent<BossNetworkSync>();
+        
+        // Nếu có network sync, dùng nó
+        if (networkSync != null)
+        {
+            networkSync.RequestDamage(damage);
+            hitEnemies.Add(bossCollider);
+            Debug.Log($"✅ Sent {damage} damage to Boss (via network): {bossCollider.name}");
+            return;
+        }
+
+        // Fallback: lấy BossHealth directly (single player)
         BossHealth bossHealth = bossCollider.GetComponent<BossHealth>();
         if (bossHealth == null)
             bossHealth = bossCollider.GetComponentInParent<BossHealth>();
@@ -77,11 +90,11 @@ public class WeaponHitbox : MonoBehaviour
         {
             bossHealth.TakeDamage(damage);
             hitEnemies.Add(bossCollider);
-            Debug.Log($"✅ Dealt {damage} damage to Boss: {bossCollider.name}");
+            Debug.Log($"✅ Dealt {damage} damage to Boss (direct): {bossCollider.name}");
         }
         else
         {
-            Debug.LogError($"❌ No BossHealth on {bossCollider.name}!");
+            Debug.LogError($"❌ No BossHealth or BossNetworkSync on {bossCollider.name}!");
         }
     }
 
