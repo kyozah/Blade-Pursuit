@@ -62361,70 +62361,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400010, guid: 1e194e72b4c296e4fbe1211190e4cb2a, type: 3}
   m_PrefabInstance: {fileID: 1716772883}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &784595469
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 784595472}
-  - component: {fileID: 784595471}
-  - component: {fileID: 784595470}
-  m_Layer: 0
-  m_Name: NetworkChatManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &784595470
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 784595469}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e525d77bbc1275a4cb49e4aaa348aaa6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NetworkChatManager
---- !u!114 &784595471
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 784595469}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 1916114687
-  ObjectInterest: 1
-  Flags: 786433
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 784595470}
-  ForceRemoteRenderTimeframe: 0
---- !u!4 &784595472
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 784595469}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 298.58276, y: -0, z: 606.2684}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &784786719
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -117309,6 +117245,14 @@ PrefabInstance:
     - target: {fileID: 3646552217141801661, guid: 552586c41272f78478f96b264f3eb25e, type: 3}
       propertyPath: 'playerPrefab.RawGuidValue.Array.data[1]'
       value: 7518384011343723224
+      objectReference: {fileID: 0}
+    - target: {fileID: 3646552217141801661, guid: 552586c41272f78478f96b264f3eb25e, type: 3}
+      propertyPath: 'networkChatManagerPrefab.RawGuidValue.Array.data[0]'
+      value: -7728110384449537494
+      objectReference: {fileID: 0}
+    - target: {fileID: 3646552217141801661, guid: 552586c41272f78478f96b264f3eb25e, type: 3}
+      propertyPath: 'networkChatManagerPrefab.RawGuidValue.Array.data[1]'
+      value: 8856934775216453883
       objectReference: {fileID: 0}
     - target: {fileID: 4615164650464838421, guid: 552586c41272f78478f96b264f3eb25e, type: 3}
       propertyPath: m_LocalPosition.x
@@ -173687,6 +173631,67 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1804503087}
   m_SourcePrefab: {fileID: 100100000, guid: 0ebb6e843eecde04b92ac934d209b2c7, type: 3}
+--- !u!1001 &1914171612661499163
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4055306346464014421, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: m_Name
+      value: NetworkChatManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816173392742056690, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 298.58276
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816173392742056690, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816173392742056690, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 606.2684
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816173392742056690, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816173392742056690, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816173392742056690, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816173392742056690, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816173392742056690, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816173392742056690, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816173392742056690, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8749544601965177429, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
+      propertyPath: SortKey
+      value: 1067201234
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2abae0f58c3cc094fbb894834027ea7a, type: 3}
 --- !u!1001 &1926721163034789085
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -176795,4 +176800,4 @@ SceneRoots:
   - {fileID: 520709845}
   - {fileID: 1635547622}
   - {fileID: 1532810340}
-  - {fileID: 784595472}
+  - {fileID: 1914171612661499163}
