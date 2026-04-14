@@ -13,7 +13,7 @@ public class ChatUI : MonoBehaviour
     public GameObject chatMessagePrefab;
     public ScrollRect scrollRect;
     
-    public float messageLifetime = 10f;
+    public float messageLifetime = 0f; // Set to 0 to keep messages indefinitely
     public int maxMessages = 50;
     
     private bool isChatActive = false;
@@ -48,10 +48,10 @@ public class ChatUI : MonoBehaviour
             return;
         }
 
-        chatManager = FindFirstObjectByType<NetworkChatManager>();
+        chatManager = NetworkChatManager.Instance;
         Debug.Log($"ChatManager found: {chatManager != null}");
         
-        if (chatManager != null)
+        if (chatManager != null && chatManager.Object != null)
         {
             if (!isSubscribed)
             {
@@ -93,6 +93,24 @@ public class ChatUI : MonoBehaviour
         Debug.Log("OpenChat");
         isChatActive = true;
         chatPanel.SetActive(true);
+        
+        // Clear existing message objects to avoid duplicates
+        foreach (var obj in messageObjects)
+        {
+            Destroy(obj);
+        }
+        messageObjects.Clear();
+        
+        // Load chat history
+        if (chatManager != null)
+        {
+            var history = chatManager.GetChatHistory();
+            foreach (var msg in history)
+            {
+                AddMessageToUI(msg);
+            }
+        }
+        
         chatInputField.Select();
         chatInputField.ActivateInputField();
         Cursor.lockState = CursorLockMode.None;
@@ -166,9 +184,7 @@ public class ChatUI : MonoBehaviour
         localPlayerName = networkManager != null ? networkManager.GetLocalPlayerName() : PlayerPrefs.GetString("PlayerName", "Player");
 
         // 1) Chat manager phải tồn tại và đã được Fusion init (Object != null)
-        if (chatManager == null)
-            chatManager = FindFirstObjectByType<NetworkChatManager>();
-
+        chatManager = NetworkChatManager.Instance;
         if (chatManager == null || chatManager.Object == null)
             return;
 
@@ -235,7 +251,7 @@ public class ChatUI : MonoBehaviour
             scrollRect.verticalNormalizedPosition = 0f;
         }
         
-        Destroy(messageObj, messageLifetime);
+        // Removed Destroy(messageObj, messageLifetime); to keep messages indefinitely
     }
     
     void OnDestroy()

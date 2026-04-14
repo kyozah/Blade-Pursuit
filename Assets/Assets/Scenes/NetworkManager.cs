@@ -26,6 +26,21 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
 
         // Đảm bảo luôn có tên local ngay cả khi chưa bấm lại UI.
         localPlayerName = PlayerPrefs.GetString("PlayerName", "");
+
+        ValidateChatManagerPrefab();
+    }
+
+    void OnValidate()
+    {
+        ValidateChatManagerPrefab();
+    }
+
+    private void ValidateChatManagerPrefab()
+    {
+        if (networkChatManagerPrefab.Equals(default(NetworkPrefabRef)))
+        {
+            Debug.LogWarning("[NET] networkChatManagerPrefab chưa được gán trong NetworkManager. Chat sẽ không hoạt động.");
+        }
     }
     
     public void SetLocalPlayerName(string name)
@@ -178,13 +193,18 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public void OnInput(NetworkRunner runner, NetworkInput input)
     {
         var data = new NetworkInputData();
-        var move = Vector2.zero;
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))    move.y += 1;
-        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))  move.y -= 1;
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))  move.x -= 1;
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) move.x += 1;
-        data.move   = move.normalized;
-        data.sprint = Input.GetKey(KeyCode.LeftShift);
+        
+        // Disable movement input when chat is active (cursor not locked)
+        if (Cursor.lockState == CursorLockMode.Locked)
+        {
+            var move = Vector2.zero;
+            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))    move.y += 1;
+            if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))  move.y -= 1;
+            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))  move.x -= 1;
+            if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) move.x += 1;
+            data.move = move.normalized;
+            data.sprint = Input.GetKey(KeyCode.LeftShift);
+        }
         
         var camera = FindFirstObjectByType<ThirdPersonCamera>();
         data.cameraYaw = (camera != null) ? camera.GetCameraYaw() : 0f;
@@ -243,7 +263,11 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     
     public void OnSceneLoadDone(NetworkRunner runner) 
     { 
-        Debug.Log("[NET] Scene load done"); 
+        Debug.Log("[NET] Scene load done");
+        if (runner.IsServer)
+        {
+            EnsureNetworkChatManagerSpawned(runner);
+        }
     }
     
     public void OnSceneLoadStart(NetworkRunner runner) 
