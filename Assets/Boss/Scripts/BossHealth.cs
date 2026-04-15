@@ -28,30 +28,18 @@ public class BossHealth : MonoBehaviour
 
     public void TakeDamage(float dmg)
     {
-        var runner = FindFirstObjectByType<NetworkRunner>();
-        
-        // Nếu có network, gửi qua RPC
-        if (runner != null && networkSync != null)
+        // Nếu không có networkSync, apply directly (single player)
+        if (networkSync == null || networkSync.Object == null)
         {
-            if (!runner.IsServer)
-            {
-                // Client gửi request đến host
-                Debug.Log($"[BossHealth] Client requesting damage: {dmg}");
-                networkSync.RequestDamage(dmg);
-            }
-            else
-            {
-                // Host apply directly
-                Debug.Log($"[BossHealth] Host applying damage: {dmg}");
-                TakeDamageAuthority(dmg);
-            }
-        }
-        else
-        {
-            // Single player - apply directly
             Debug.Log($"[BossHealth] Single player damage: {dmg}");
             TakeDamageAuthority(dmg);
+            return;
         }
+        
+        // Multiplayer: Always use RequestDamage (đúng Photon Fusion cách)
+        // Cho dù host hay client, đều gửi RPC để host xử lý
+        Debug.Log($"[BossHealth] Requesting damage via network: {dmg}");
+        networkSync.RequestDamage(dmg);
     }
 
     public void TakeDamageAuthority(float dmg)

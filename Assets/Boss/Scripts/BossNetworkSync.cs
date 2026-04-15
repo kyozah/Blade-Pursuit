@@ -14,17 +14,21 @@ public class BossNetworkSync : NetworkBehaviour
 
     private BossBrain _brain;
     private BossHealth _health;
+    private BossCombat _combat;
+    private BossBrain.State _lastSyncedState = BossBrain.State.Idle; // ✅ Track last state for animation sync
 
     private void Awake()
     {
         _brain = GetComponent<BossBrain>();
         _health = GetComponentInChildren<BossHealth>();
+        _combat = GetComponent<BossCombat>();
     }
 
     public override void Spawned()
     {
         if (_brain == null) _brain = GetComponent<BossBrain>();
         if (_health == null) _health = GetComponentInChildren<BossHealth>();
+        if (_combat == null) _combat = GetComponent<BossCombat>();
 
         if (HasStateAuthority)
         {
@@ -71,18 +75,47 @@ public class BossNetworkSync : NetworkBehaviour
         // CLIENT: Apply boss state
         if (!NetInitialized) return;
 
-        // Update position
-        transform.position = Vector3.Lerp(transform.position, NetPos, Runner.DeltaTime * 10f);
+        // Update position với lerp cao hơn để smooth hơn (15 thay vì 10)
+        transform.position = Vector3.Lerp(transform.position, NetPos, Runner.DeltaTime * 15f);
         transform.eulerAngles = NetEuler;
         
         // Update health
         _health?.ApplyNetworkHp(NetHp, NetDead);
         
         // ✅ Update boss state - này là quan trọng để client thấy boss animation
+        BossBrain.State newState = (BossBrain.State)NetState;
         if (_brain != null)
         {
-            _brain.currentState = (BossBrain.State)NetState;
+            _brain.currentState = newState;
             _brain.currentPhase = (BossBrain.Phase)NetPhase;
+            
+            // ✅ Trigger animations khi state thay đổi
+            if (newState != _lastSyncedState && _combat != null)
+            {
+                SyncAnimationToState(newState, _lastSyncedState);
+                _lastSyncedState = newState;
+            }
+        }
+    }
+    
+    private void SyncAnimationToState(BossBrain.State newState, BossBrain.State oldState)
+    {
+        Debug.Log($"[BossNetworkSync] 🎬 State changed: {oldState} → {newState}, syncing animation");
+        
+        // Nếu từ state khác chuyển sang Roar, trigger Roar animation
+        if (newState == BossBrain.State.Roar && oldState != BossBrain.State.Roar)
+        {
+            // Phân biệt Roar1 vs Roar2 dựa trên phase
+            if (_brain.currentPhase == BossBrain.Phase.Phase1)
+                _combat.DoRoar1();
+            else
+                _combat.DoRoar2();
+        }
+        // Nếu attack, trigger animation (sẽ phải track attack type, fallback to Attack1)
+        else if (newState == BossBrain.State.Attack && oldState != BossBrain.State.Attack)
+        {
+            // Fallback - Play Attack1 khi không biết attack type nào
+            _combat.DoAttack1();
         }
     }
 
@@ -93,25 +126,30 @@ public class BossNetworkSync : NetworkBehaviour
         // NetworkObject phải initialized mới gửi RPC được
         if (Object == null)
         {
-            Debug.LogWarning($"[BossNetworkSync] Object null - không thể gửi damage RPC. Applying locally.");
-            ApplyDamageAuthority(damage);
+            Debug.LogWarning($"[BossNetworkSync] ⚠️ Object null - NetworkObject chưa initialized. Skip damage.");
             return;
         }
 
         if (HasStateAuthority)
         {
+            Debug.Log($"[BossNetworkSync] ✅ Host applying damage: {damage}");
             ApplyDamageAuthority(damage);
             return;
         }
         
-        Debug.Log($"[BossNetworkSync] Client requesting {damage} damage to boss");
+        Debug.Log($"[BossNetworkSync] 📤 Sending RPC to host requesting {damage} damage");
         RpcRequestDamage(damage);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     private void RpcRequestDamage(float damage, RpcInfo info = default)
     {
-        Debug.Log($"[BossNetworkSync] RPC received - damage: {damage}, from: {info.Source}");
+        Debug.Log($"[BossNetworkSync] 🎯 RPC received - damage: {damage}, from: {info.Source}");
+        if (!HasStateAuthority)
+        {
+            Debug.LogWarning($"[BossNetworkSync] RPC received but không phải StateAuthority? Skip.");
+            return;
+        }
         ApplyDamageAuthority(damage);
     }
 
