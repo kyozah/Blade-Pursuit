@@ -77580,6 +77580,107 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4118239530578406, guid: fee4035f303fb1e48b130b830c23f49a, type: 3}
   m_PrefabInstance: {fileID: 954694693}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &955317164
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 955317168}
+  - component: {fileID: 955317167}
+  - component: {fileID: 955317166}
+  - component: {fileID: 955317165}
+  m_Layer: 0
+  m_Name: EnemyManager_Zone1 (8)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &955317165
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 955317164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
+  SortKey: 154313439
+  ObjectInterest: 1
+  Flags: 262145
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 955317167}
+  ForceRemoteRenderTimeframe: 0
+--- !u!65 &955317166
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 955317164}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 34.92, y: 8.22, z: 29.79}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &955317167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 955317164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 283350d10f554fb4eb5819b45aa6f1ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
+  skeletonPrefab: {fileID: 6488992509232211941, guid: 0ac202ca05cbd874d9658027971ff894, type: 3}
+  flyPrefab: {fileID: 755561605113938861, guid: 30853266b60133140ae8a67fd0d9f2ac, type: 3}
+  tankPrefab: {fileID: 5783773701163634531, guid: b759f5d79bf4f7c458458f1a9f37019b, type: 3}
+  skeletonWeight: 0.5
+  flyWeight: 0.3
+  tankWeight: 1
+  allowSkeleton: 1
+  allowFly: 1
+  allowTank: 1
+  maxFlyPerZone: 1
+  maxEnemies: 5
+  spawnRadius: 10
+  spawnHeight: 0
+  attackCooldown: 2
+  showDebugInfo: 0
+--- !u!4 &955317168
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 955317164}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 625.2, y: 401.2, z: 468.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &956108446
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -94553,7 +94654,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1129662395
 Transform:
   m_ObjectHideFlags: 0
@@ -177012,6 +177113,7 @@ SceneRoots:
   - {fileID: 767966607}
   - {fileID: 372027764}
   - {fileID: 1049750733}
+  - {fileID: 955317168}
   - {fileID: 1925392871}
   - {fileID: 1669405395}
   - {fileID: 408297419}
