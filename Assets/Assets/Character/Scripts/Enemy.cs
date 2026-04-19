@@ -42,6 +42,11 @@ public class Enemy : NetworkBehaviour
     public float damageStunDuration = 2f;
     private float lastDamageTime = -Mathf.Infinity;
 
+    [Header("VFX")]
+    public GameObject hitVFXPrefab;        // Particle System khi bị đánh
+    public Transform vfxSpawnPoint;        // Vị trí spawn VFX (nếu null thì dùng vị trí enemy)
+    public float vfxLifetime = 1f;         // Thời gian tồn tại của VFX
+
     private Rigidbody rb;
     private Animator animator;
     private bool hasIsMoving = false;
@@ -82,6 +87,12 @@ public class Enemy : NetworkBehaviour
         {
             Debug.LogError($"❌ Enemy '{gameObject.name}' MISSING RIGIDBODY!");
             return;
+        }
+
+        // Nếu không có vfxSpawnPoint thì dùng transform của enemy
+        if (vfxSpawnPoint == null)
+        {
+            vfxSpawnPoint = transform;
         }
 
         // Client: tắt vật lý để tránh xung đột với NetworkTransform
@@ -399,6 +410,7 @@ public class Enemy : NetworkBehaviour
         lastDamageTime = Time.time;
 
         RpcPlayDamageEffects();
+        RpcSpawnHitVFX(attackerPosition); // GỌI RPC SPAWN VFX
 
         Vector3 knockbackDirection;
 
@@ -433,6 +445,26 @@ public class Enemy : NetworkBehaviour
     {
         if (audioSystem != null) audioSystem.PlayDamageSound();
         if (animator != null) animator.SetTrigger("Hit");
+    }
+
+    // RPC SPAWN VFX - Chạy trên tất cả client
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RpcSpawnHitVFX(Vector3 attackerPosition)
+    {
+        if (hitVFXPrefab != null && vfxSpawnPoint != null)
+        {
+            // Tính hướng từ attacker đến enemy để xoay VFX
+            Vector3 direction = (transform.position - attackerPosition).normalized;
+            Quaternion rotation = Quaternion.LookRotation(direction);
+
+            GameObject vfx = Instantiate(hitVFXPrefab, vfxSpawnPoint.position, rotation);
+            Destroy(vfx, vfxLifetime);
+
+            if (showDebugInfo)
+            {
+                Debug.Log($"✨ Spawned hit VFX at {vfxSpawnPoint.position}");
+            }
+        }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

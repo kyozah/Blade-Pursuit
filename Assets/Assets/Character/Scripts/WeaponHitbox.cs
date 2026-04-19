@@ -15,6 +15,10 @@ public class WeaponHitbox : MonoBehaviour
     public string enemyTag = "Enemy";
     public string bossTag = "Boss";
 
+    [Header("VFX")]
+    public GameObject hitVFXPrefab;
+    public float vfxLifetime = 0.5f;
+
     private bool canDealDamage = false;
     private List<Collider> hitEnemies = new List<Collider>();
     private Coroutine enableCoroutine;
@@ -40,6 +44,8 @@ public class WeaponHitbox : MonoBehaviour
         {
             if (hitEnemies.Contains(col)) continue;
 
+            Debug.Log($"WeaponHitbox hit: {col.name}, tag: {col.tag}");
+
             if (col.CompareTag(enemyTag))
                 DealDamageToEnemy(col);
             else if (col.CompareTag(bossTag))
@@ -59,6 +65,7 @@ public class WeaponHitbox : MonoBehaviour
             enemy.TakeDamage(damage, transform.root.position, attackerForward);
             OverrideEnemyKnockback(enemy);
             hitEnemies.Add(enemyCollider);
+            SpawnHitVFX(enemyCollider.ClosestPoint(transform.position));
             Debug.Log($"✅ Dealt {damage} damage to Enemy: {enemyCollider.name}");
         }
         else
@@ -69,33 +76,50 @@ public class WeaponHitbox : MonoBehaviour
 
     void DealDamageToBoss(Collider bossCollider)
     {
-        // Tìm BossNetworkSync trước (priority cao hơn để damage được sync)
-        BossNetworkSync networkSync = bossCollider.GetComponentInParent<BossNetworkSync>();
-        
-        // Nếu có network sync, dùng nó
-        if (networkSync != null)
-        {
-            networkSync.RequestDamage(damage);
-            hitEnemies.Add(bossCollider);
-            Debug.Log($"✅ Sent {damage} damage to Boss (via network): {bossCollider.name}");
-            return;
-        }
+        Debug.Log($"DealDamageToBoss called on: {bossCollider.name}");
 
-        // Fallback: lấy BossHealth directly (single player)
+        // Cách 1: Lấy trực tiếp từ collider
         BossHealth bossHealth = bossCollider.GetComponent<BossHealth>();
+
+        // Cách 2: Nếu không có, tìm trong parent
         if (bossHealth == null)
             bossHealth = bossCollider.GetComponentInParent<BossHealth>();
 
+        // Cách 3: Tìm trong toàn bộ hierarchy (bao gồm cả child)
+        if (bossHealth == null)
+            bossHealth = bossCollider.GetComponentInChildren<BossHealth>();
+
+        // Cách 4: Tìm bằng tag (fallback)
+        if (bossHealth == null)
+        {
+            GameObject bossObj = GameObject.FindGameObjectWithTag("Boss");
+            if (bossObj != null)
+                bossHealth = bossObj.GetComponentInChildren<BossHealth>();
+        }
+
         if (bossHealth != null)
         {
+            Debug.Log($"Found BossHealth! Current HP: {bossHealth.CurrentHP}, dealing {damage} damage");
             bossHealth.TakeDamage(damage);
             hitEnemies.Add(bossCollider);
-            Debug.Log($"✅ Dealt {damage} damage to Boss (direct): {bossCollider.name}");
+            SpawnHitVFX(bossCollider.ClosestPoint(transform.position));
+            Debug.Log($"✅ Dealt {damage} damage to Boss: {bossCollider.name}, New HP: {bossHealth.CurrentHP}");
         }
         else
         {
-            Debug.LogError($"❌ No BossHealth or BossNetworkSync on {bossCollider.name}!");
+            Debug.LogError($"❌ No BossHealth found on {bossCollider.name} or its parents/children!");
+            Debug.Log($"   Collider name: {bossCollider.name}");
+            Debug.Log($"   Collider tag: {bossCollider.tag}");
+            Debug.Log($"   Root object: {bossCollider.transform.root.name}");
         }
+    }
+
+    void SpawnHitVFX(Vector3 position)
+    {
+        if (hitVFXPrefab == null) return;
+
+        GameObject vfx = Instantiate(hitVFXPrefab, position, Quaternion.identity);
+        Destroy(vfx, vfxLifetime);
     }
 
     void OverrideEnemyKnockback(Enemy enemy)

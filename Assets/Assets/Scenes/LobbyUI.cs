@@ -27,11 +27,16 @@ public class LobbyUI : MonoBehaviour
     public Transform roomListContainer;
     public RoomListItem roomListItemPrefab;
 
-    private List<RoomListItem> _items = new();
+    [Header("Player List (trong phòng)")]
+    public PlayerListUI playerListUI;
+
+    [Header("Disconnected Message")]
+    public TMP_Text disconnectedText;
+
+    private List<RoomListItem> _items = new List<RoomListItem>();
 
     void Start()
     {
-        // ── Kiểm tra references ───────────────────────────
         if (networkManager == null)
         {
             Debug.LogError("[LobbyUI] networkManager chưa được gán trong Inspector!");
@@ -63,7 +68,6 @@ public class LobbyUI : MonoBehaviour
             var name = joinRoomInput.text.Trim();
             if (!string.IsNullOrEmpty(name))
             {
-                HideLobby();
                 networkManager.JoinRoom(name);
             }
         });
@@ -71,24 +75,48 @@ public class LobbyUI : MonoBehaviour
         if (startGameButton != null)
             startGameButton.onClick.AddListener(() => networkManager.StartGame());
 
+        // Đảm bảo PlayerListUI hiển thị (khung) nhưng chưa có dữ liệu
+        if (playerListUI != null)
+        {
+            playerListUI.SetVisible(true);
+            playerListUI.ClearList();
+        }
+
         Debug.Log("[LobbyUI] Start() xong, gọi JoinLobby...");
         networkManager.JoinLobby();
     }
 
+    // Ẩn toàn bộ panel lobby (khi bắt đầu game)
     public void HideLobby()
     {
         if (lobbyPanel != null)
             lobbyPanel.SetActive(false);
     }
 
+    // Hiện lại panel lobby (khi rời phòng)
     public void ShowLobby()
     {
         if (lobbyPanel != null)
             lobbyPanel.SetActive(true);
     }
-    
-    [Header("Disconnected Message")]
-    public TMP_Text disconnectedText; // Assign a TextMeshPro text in the UI
+
+    // Gọi khi đã vào phòng thành công (host hoặc client)
+    public void NotifyEnteredRoom()
+    {
+        Debug.Log("[LobbyUI] NotifyEnteredRoom - cập nhật danh sách người chơi");
+        if (playerListUI != null)
+            playerListUI.OnEnterRoom();
+        // Không ẩn lobby panel để vẫn thấy danh sách phòng và nút tạo/join
+    }
+
+    // Gọi khi rời phòng (disconnect)
+    public void NotifyLeftRoom()
+    {
+        Debug.Log("[LobbyUI] NotifyLeftRoom - xóa danh sách người chơi");
+        if (playerListUI != null)
+            playerListUI.OnExitRoom();
+        ShowLobby(); // Hiện lại panel lobby (nếu đã bị ẩn)
+    }
 
     public void BuildRoomList(List<SessionInfo> sessions)
     {
@@ -112,7 +140,6 @@ public class LobbyUI : MonoBehaviour
             var item = Instantiate(roomListItemPrefab, roomListContainer);
             item.Init(s.Name, () =>
             {
-                HideLobby();
                 networkManager.JoinRoom(s.Name);
             });
             _items.Add(item);
@@ -127,5 +154,6 @@ public class LobbyUI : MonoBehaviour
             disconnectedText.gameObject.SetActive(true);
         }
         Debug.Log($"[UI] Disconnected: {reason}");
+        NotifyLeftRoom();
     }
 }
